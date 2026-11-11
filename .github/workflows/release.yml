@@ -1,16 +1,61 @@
-name: release
+name: Release
 
 on:
   push:
-    tags: ['v*']
+    branches:
+      - main
+    paths:
+      - version
   workflow_dispatch:
 
 permissions:
   contents: write
 
+concurrency:
+  group: release
+  cancel-in-progress: false
+
 jobs:
-  release:
+  preflight:
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      tag: ${{ steps.version.outputs.tag }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Read version
+        id: version
+        run: |
+          set -euo pipefail
+          if [ ! -f version ]; then
+            echo "version file not found"
+            exit 1
+          fi
+          version="$(tr -d ' \t\r\n' < version)"
+          if ! [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "version must contain three numeric parts, for example 0.2.0."
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "tag=v$version" >> "$GITHUB_OUTPUT"
+
+      - name: Check tag
+        env:
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          set -euo pipefail
+          existing="$(git ls-remote --tags origin "refs/tags/$TAG")"
+          if [ -n "$existing" ]; then
+            echo "Tag $TAG already exists. Bump version."
+            exit 1
+          fi
+
+  test:
+    needs: preflight
+    runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
 
@@ -21,7 +66,26 @@ jobs:
 
       - uses: android-actions/setup-android@v3
 
-      # Caches the Gradle user home so the dependencies are not downloaded every run.
+      - name: Run tests
+        run: ./gradlew :app:testDebugUnitTest
+
+  build:
+    needs:
+      - preflight
+      - test
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - uses: android-actions/setup-android@v3
+
       - uses: gradle/actions/setup-gradle@v4
 
       # The release is signed with the repository's key. If the secrets are gone the
@@ -33,6 +97,7 @@ jobs:
           BONK_KEY_ALIAS: ${{ secrets.BONK_KEY_ALIAS }}
           BONK_KEY_PASSWORD: ${{ secrets.BONK_KEY_PASSWORD }}
         run: |
+          set -euo pipefail
           missing=0
           for secret in BONK_KEYSTORE_BASE64 BONK_KEYSTORE_PASSWORD BONK_KEY_ALIAS BONK_KEY_PASSWORD; do
             if [ -z "${!secret}" ]; then
@@ -46,6 +111,7 @@ jobs:
         env:
           BONK_KEYSTORE_BASE64: ${{ secrets.BONK_KEYSTORE_BASE64 }}
         run: |
+          set -euo pipefail
           printf '%s' "$BONK_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/bonk-release.jks"
           echo "BONK_KEYSTORE=$RUNNER_TEMP/bonk-release.jks" >> "$GITHUB_ENV"
 
@@ -57,29 +123,99 @@ jobs:
         # No configuration cache: the signing configuration is read from the
         # environment, and a restored cache must never be able to serve a
         # configuration that was built without the key.
-        run: ./gradlew :app:assembleRelease --no-configuration-cache
+        run: ./gradlew :app:assembleRelease -PabiSplits=true --no-configuration-cache
 
       - name: Verify the signature
         run: |
+          set -euo pipefail
           apksigner="$(ls -d "$ANDROID_HOME"/build-tools/*/apksigner | tail -1)"
-          certs="$("$apksigner" verify --print-certs app/build/outputs/apk/release/app-release.apk)"
-          echo "$certs"
-          if echo "$certs" | grep -q "CN=Android Debug"; then
-            echo "::error::the release APK is signed with the debug key"
-            exit 1
-          fi
+          for apk in app/build/outputs/apk/release/*.apk; do
+            certs="$("$apksigner" verify --print-certs "$apk")"
+            echo "$apk: $(echo "$certs" | grep 'certificate DN' | head -1)"
+            if echo "$certs" | grep -q "CN=Android Debug"; then
+              echo "::error::$apk is signed with the debug key"
+              exit 1
+            fi
+          done
 
       - name: Checksums
-        run: sha256sum app/build/outputs/apk/release/app-release.apk > SHA256SUMS.txt
+        run: |
+          set -euo pipefail
+          cd app/build/outputs/apk/release
+          sha256sum *.apk > SHA256SUMS.txt
+          cat SHA256SUMS.txt
 
-      - name: Publish
-        uses: softprops/action-gh-release@v2
+      - name: Verify the checksums
+        run: |
+          set -euo pipefail
+          cd app/build/outputs/apk/release
+          for apk in *.apk; do
+            line="$(grep -F " $apk" SHA256SUMS.txt || true)"
+            if [ -z "$line" ]; then
+              echo "Checksum file does not reference $apk"
+              exit 1
+            fi
+            expected="${line%% *}"
+            actual="$(sha256sum "$apk" | cut -d' ' -f1)"
+            if [ "$expected" != "$actual" ]; then
+              echo "Checksum does not match $apk"
+              exit 1
+            fi
+          done
+
+      - uses: actions/upload-artifact@v4
         with:
-          files: |
-            app/build/outputs/apk/release/app-release.apk
-            SHA256SUMS.txt
+          name: bonk-${{ needs.preflight.outputs.version }}
+          path: |
+            app/build/outputs/apk/release/*.apk
+            app/build/outputs/apk/release/SHA256SUMS.txt
+          if-no-files-found: error
 
       # The key never survives the runner.
       - name: Delete the signing key
         if: always()
         run: rm -f "$RUNNER_TEMP/bonk-release.jks"
+
+  publish:
+    needs:
+      - preflight
+      - build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: bonk-${{ needs.preflight.outputs.version }}
+          path: artifacts
+
+      - name: Verify the checksums
+        run: |
+          set -euo pipefail
+          cd artifacts
+          for apk in *.apk; do
+            line="$(grep -F " $apk" SHA256SUMS.txt || true)"
+            if [ -z "$line" ]; then
+              echo "Checksum file does not reference $apk"
+              exit 1
+            fi
+            expected="${line%% *}"
+            actual="$(sha256sum "$apk" | cut -d' ' -f1)"
+            if [ "$expected" != "$actual" ]; then
+              echo "Checksum does not match $apk"
+              exit 1
+            fi
+          done
+
+      - name: Create draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.preflight.outputs.tag }}
+        run: |
+          set -euo pipefail
+          notes="$(sed -e "s|<commit>|$GITHUB_SHA|g" -e "s|<tag>|$TAG|g" .github/RELEASE_TEMPLATE.md)"
+          printf '%s\n' "$notes" > "$RUNNER_TEMP/release-notes.md"
+          gh release create "$TAG" artifacts/*.apk artifacts/SHA256SUMS.txt \
+            --draft --target "$GITHUB_SHA" --title "$TAG" \
+            --notes-file "$RUNNER_TEMP/release-notes.md"

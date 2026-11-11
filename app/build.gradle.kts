@@ -3,6 +3,18 @@ plugins {
     alias(libs.plugins.compose.compiler)
 }
 
+// The version lives in the `version` file at the root of the repository. One place to
+// bump, and the release workflow reads the same file to work out the tag.
+val versionFile = rootProject.file("version")
+val appVersion = versionFile.takeIf { it.exists() }?.readText()?.trim()
+    ?: error("version file missing at ${versionFile.path}")
+val versionParts = appVersion.split(".")
+require(versionParts.size == 3 && versionParts.all { it.toIntOrNull() != null }) {
+    "version must contain three numeric parts, for example 0.2.0, but was $appVersion"
+}
+// 0.1.0 -> 100, so the code always rises as the version does.
+val appVersionCode = versionParts[0].toInt() * 10_000 + versionParts[1].toInt() * 100 + versionParts[2].toInt()
+
 // The release key comes from the environment when there is one. CI passes it in as a
 // secret; on a developer machine there is none, so a release build falls back to the
 // debug key and still installs. The release workflow checks the secrets before it
@@ -21,8 +33,8 @@ android {
         applicationId = "com.grayguava.bonk"
         minSdk = 26
         targetSdk = 37
-        versionCode = 1
-        versionName = "0.1.0"
+        versionCode = appVersionCode
+        versionName = appVersion
     }
 
     signingConfigs {
@@ -57,6 +69,17 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+    }
+
+    // One APK per processor type, plus one that runs anywhere. Off by default so a
+    // local build is a single file; the release workflow turns it on.
+    splits {
+        abi {
+            isEnable = providers.gradleProperty("abiSplits").map { it.toBoolean() }.getOrElse(false)
+            reset()
+            include("arm64-v8a", "armeabi-v7a", "x86_64")
+            isUniversalApk = true
+        }
     }
 
     buildFeatures {
