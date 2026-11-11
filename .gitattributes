@@ -1,5 +1,7 @@
-# Keep line endings sane across platforms: LF in the repo, CRLF only where Windows needs it.
-* text=auto
+# Keep line endings sane across platforms: LF everywhere in the repo and in the working
+# tree, CRLF only where Windows needs it. The explicit eol=lf stops git rewriting the
+# files as CRLF on a Windows checkout.
+* text=auto eol=lf
 
 *.kt text eol=lf
 *.kts text eol=lf
