@@ -5,11 +5,12 @@ How a Bonk! release is made. None of this is needed to build or run the app.
 ## The version
 
 The version lives in the `version` file at the root of the repository, as three numeric parts
-(`0.1.0`). The build reads it for `versionName` and derives `versionCode` from it
+(`0.2.0`). The build reads it for `versionName` and derives `versionCode` from it
 (`major*10000 + minor*100 + patch`), so the code always rises with the version.
 
-The file is not tracked yet, so a push cannot start a release by accident. Add it back with
-`git add -f version` when the first release is ready.
+The file is tracked, and a push that changes it is what starts a release. To make a release,
+change the version, commit it and push it. To push anything else, leave the file alone and
+nothing happens.
 
 ## The signing key
 
@@ -39,7 +40,7 @@ install again.
 
 A push to `main` that touches the `version` file starts the release workflow:
 
-- **preflight** reads the version, derives the tag `v0.1.0`, and refuses to run if that tag
+- **preflight** reads the version, derives the tag `v0.2.0`, and refuses to run if that tag
   already exists.
 - **test** runs the unit tests.
 - **build** checks the secrets, decodes the key, assembles, refuses to publish an APK signed
@@ -47,15 +48,18 @@ A push to `main` that touches the `version` file starts the release workflow:
 - **publish** verifies the checksum again and creates a **draft** release from
   `.github/RELEASE_TEMPLATE.md`, with `<commit>` and `<tag>` filled in.
 
+The release is a draft on purpose: nobody sees it until you have written the notes and
+published it by hand. The template leaves each section empty for you to fill.
+
 The release carries two files:
 
 ```
-v0.1.0_universal.apk
-v0.1.0_universal.apk.sha256
+v0.2.0_universal.apk
+v0.2.0_universal.apk.sha256
 ```
 
 The APK holds every processor type. The `.sha256` file is the standard `sha256sum` line, so
-`sha256sum -c v0.1.0_universal.apk.sha256` checks it.
+`sha256sum -c v0.2.0_universal.apk.sha256` checks it.
 
 ## Building a signed release locally
 

@@ -13,7 +13,7 @@ com.grayguava.bonk
 │   ├── HomeScreen.kt    the streak counter and the start/reset button
 │   ├── HistoryScreen.kt finished streaks
 │   ├── LevelsScreen.kt  the tiers, their badges and the level progress
-│   ├── AboutScreen.kt   app details and repo links
+│   ├── AboutScreen.kt   app details, backups and the update check
 │   ├── WelcomeScreen.kt asks for your name on a fresh install
 │   ├── BottomDock.kt    the glass tab bar
 │   ├── Glass.kt         the glass material: panels, buttons, icon buttons
@@ -23,6 +23,8 @@ com.grayguava.bonk
 └── data/
     ├── Streak.kt         streak records, storage, duration formatting
     ├── Levels.kt         the ten levels and five tiers
+    ├── Backup.kt         the backup document: export and import
+    ├── Update.kt         the release check and the apk download
     ├── Personality.kt    the app's voice
     └── UserStore.kt      your name
 ```
@@ -73,6 +75,27 @@ its own.
   time, ticking every second.
 - The tier and level come from `levelFor(days)` on the same number, so the home header and
   the Levels page can never disagree.
+
+## Backups
+
+A backup is one json document: a format name, a format version, the time it was taken, your
+name, the running streak and every finished streak. The version is in the document, so a file
+from a newer app is refused rather than half-read, and the export and the import go through
+the same helpers, so they cannot drift apart.
+
+The file is written and read through the system file picker, so the app needs no storage
+permission and cannot see the rest of the phone.
+
+## Updates
+
+The About page asks github for the newest published release, compares its version with the
+one you are running, and says whether there is anything new. Nothing is downloaded until you
+agree to it.
+
+The apk is written to the app's own cache and handed to the android installer through a file
+provider that exposes only that one folder. Installing it is the system's decision, not the
+app's: android asks, and wants the "install unknown apps" permission for whichever app opens
+the file.
 
 ## The dock
 

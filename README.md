@@ -17,7 +17,10 @@ a number (how many whole days your current streak has run) and gets out of the w
   ended. Tap it to see when it started and when it was reset.
 - **A greeting that knows the time.** "Good morning," / "Late night," over your name, on the
   home screen only. Every other page names itself.
-- **An About page** with the app details, the device it is running on, and a link to the repo.
+- **A backup you can carry.** The About page writes your name and every streak to a file you
+  pick, and reads one back on another device.
+- **An About page** with the app details, the device it is running on, a link to the repo, and
+  a check for a newer release that only ever runs when you ask for it.
 
 ## The tiers
 
@@ -75,12 +78,12 @@ Each release is one signed APK that runs on any Android device from 8.0 up, with
 checksum beside it:
 
 ```
-v0.1.0_universal.apk
-v0.1.0_universal.apk.sha256
+v0.2.0_universal.apk
+v0.2.0_universal.apk.sha256
 ```
 
 Download the APK from the releases page and install it, or build it yourself with the commands
-above. `sha256sum -c v0.1.0_universal.apk.sha256` checks the download.
+above. `sha256sum -c v0.2.0_universal.apk.sha256` checks the download.
 
 The About page also checks github for a newer release when you ask it to, and offers to install
 it once you agree. That is the only thing the app ever sends over the network.
@@ -93,7 +96,7 @@ Maintainers: [docs/releasing.md](docs/releasing.md) covers how a release is made
 app/src/main/java/com/grayguava/bonk/
   MainActivity.kt
   ui/          the screens, the dock, the glass material
-  data/        streaks, levels, the name, and the app's voice
+  data/        streaks, levels, the name, backups, updates, and the app's voice
   ui/theme/    colour scheme and shapes
 docs/          architecture, tiers, design notes
 ```
