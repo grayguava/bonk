@@ -24,7 +24,8 @@ com.grayguava.bonk
     ├── Streak.kt         streak records, storage, duration formatting
     ├── Levels.kt         the ten levels and five tiers
     ├── Backup.kt         the backup document: export and import
-    ├── Update.kt         the release check and the apk download
+    ├── Update.kt         the release check, the download
+    ├── Install.kt        the install session, and how it went
     ├── Personality.kt    the app's voice
     └── UserStore.kt      your name
 ```
@@ -92,10 +93,22 @@ The About page asks github for the newest published release, compares its versio
 one you are running, and says whether there is anything new. Nothing is downloaded until you
 agree to it.
 
-The apk is written to the app's own cache and handed to the android installer through a file
-provider that exposes only that one folder. Installing it is the system's decision, not the
-app's: android asks, and wants the "install unknown apps" permission for whichever app opens
-the file.
+The bytes go straight into an **install session**, which the system holds, rather than into
+a file in the app's cache, which the system may reclaim halfway through. The apk's checksum
+is read from the release and checked against the download as it arrives; an apk that does
+not match is thrown away and never handed over.
+
+Android will not let the app install anything until the user says the app may, which the
+app checks before it downloads and, if the answer is no, sends the user to the setting
+where that is decided. The install itself is the system's: it shows its own screen, and the
+user taps install. Nothing can be installed without that tap.
+
+The permission this needs is `REQUEST_INSTALL_PACKAGES`, and Google Play only grants it to a
+few kinds of app. If Bonk ever goes on Play, the updater has to be reconsidered: Play's own
+in-app update would be the way, and it only sees versions published through Play.
+
+An update keeps the app's data, so the streaks and the name survive it. The process is
+killed by a successful install, so the app is opened again by hand afterwards.
 
 ## The dock
 

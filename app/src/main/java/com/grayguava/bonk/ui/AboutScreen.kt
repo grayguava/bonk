@@ -48,6 +48,7 @@ import androidx.compose.material3.Snackbar
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableLongStateOf
@@ -67,10 +68,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.grayguava.bonk.R
 import com.grayguava.bonk.data.Backup
+import com.grayguava.bonk.data.InstallEvents
+import com.grayguava.bonk.data.InstallOutcome
+import com.grayguava.bonk.data.InstallResult
 import com.grayguava.bonk.data.StreakStore
 import com.grayguava.bonk.data.UserStore
+import com.grayguava.bonk.data.canRequestInstall
 import com.grayguava.bonk.data.exportBackup
 import com.grayguava.bonk.data.importBackup
+import com.grayguava.bonk.data.installApk
+import com.grayguava.bonk.data.openInstallPermissionSettings
 import com.grayguava.bonk.ui.theme.CardSurface
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -80,12 +87,9 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 import androidx.compose.material3.ButtonDefaults
-import androidx.core.content.FileProvider
 import com.grayguava.bonk.data.Release
-import com.grayguava.bonk.data.downloadApk
 import com.grayguava.bonk.data.fetchLatestRelease
 import com.grayguava.bonk.data.isNewerVersion
-import java.io.File
 
 /** Where the app lives. Change these when the repo moves. */
 private const val REPO_URL = "https://github.com/grayguava/bonk"
@@ -176,6 +180,19 @@ fun AboutScreen(
     var downloadedBytes by remember { mutableLongStateOf(0L) }
     var totalBytes by remember { mutableLongStateOf(0L) }
     var downloadJob by remember { mutableStateOf<Job?>(null) }
+    var needsPermission by remember { mutableStateOf(false) }
+
+    // The system reports how the install went.
+    LaunchedEffect(Unit) {
+        InstallEvents.results.collect { result ->
+            when (result) {
+                is InstallResult.Installed ->
+                    snackbarHostState.showSnackbar("Updated to ${result.version}.")
+                is InstallResult.Refused ->
+                    snackbarHostState.showSnackbar(result.reason)
+            }
+        }
+    }
 
     // Check first, then ask: nothing is downloaded and nothing is installed until the
     // user says yes.
@@ -194,49 +211,42 @@ fun AboutScreen(
         }
     }
 
-    // The download happens in the dialog, where the progress bar can show it. When it
-    // finishes, the apk goes to the system installer.
+    // The download happens in the dialog, where the progress bar can show it. When the
+    // bytes are down the system installer takes over, and Android asks the user.
     fun startDownload(release: Release) {
-        val url = release.apkUrl ?: return
         downloadJob = scope.launch {
             downloading = true
             progress = 0f
             downloadedBytes = 0L
             totalBytes = 0L
-            val file = File(context.cacheDir, "updates/bonk-${release.version}.apk")
             try {
-                val done = downloadApk(url, file) { done, total ->
+                when (val outcome = installApk(context, release) { done, total ->
                     downloadedBytes = done
                     totalBytes = total
                     progress = if (total > 0) done.toFloat() / total else 0f
-                }
-                if (!done) {
-                    snackbarHostState.showSnackbar("The download did not finish.")
-                    return@launch
-                }
-                progress = 1f
-                available = null
-                val uri = FileProvider.getUriForFile(
-                    context,
-                    "${context.packageName}.fileprovider",
-                    file,
-                )
-                runCatching {
-                    context.startActivity(
-                        Intent(Intent.ACTION_VIEW).apply {
-                            setDataAndType(uri, "application/vnd.android.package-archive")
-                            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                        }
-                    )
-                }.onFailure {
-                    Log.e("Bonk", "could not start the installer", it)
-                    snackbarHostState.showSnackbar("Could not open the installer.")
+                }) {
+                    is InstallOutcome.HandedOver -> {
+                        progress = 1f
+                        available = null
+                    }
+                    is InstallOutcome.Broken ->
+                        snackbarHostState.showSnackbar(outcome.reason)
                 }
             } finally {
                 downloading = false
                 downloadJob = null
             }
         }
+    }
+
+    // Android will not let the app install anything until the user says the app may.
+    fun beginInstall(release: Release) {
+        if (!canRequestInstall(context)) {
+            available = null
+            needsPermission = true
+            return
+        }
+        startDownload(release)
     }
 
     // The page scales with the width it has. dp is a physical unit, so density is
@@ -529,7 +539,7 @@ fun AboutScreen(
                 } else {
                     TextButton(
                         enabled = update.apkUrl != null,
-                        onClick = { startDownload(update) },
+                        onClick = { beginInstall(update) },
                     ) { Text("Install") }
                 }
             },
@@ -537,6 +547,43 @@ fun AboutScreen(
                 if (!downloading) {
                     TextButton(onClick = { available = null }) { Text("Later") }
                 }
+            },
+        )
+    }
+
+    if (needsPermission) {
+        AlertDialog(
+            onDismissRequest = { needsPermission = false },
+            modifier = Modifier.border(1.dp, Color.White.copy(alpha = 0.12f), DialogShape),
+            shape = DialogShape,
+            containerColor = Color(0xFF0A0A0A),
+            titleContentColor = Color.White,
+            textContentColor = Color.White.copy(alpha = 0.7f),
+            title = {
+                Text(
+                    text = "Android needs permission",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                )
+            },
+            text = {
+                Text(
+                    text = "Android only lets Bonk install an update if you allow " +
+                        "installs from this app. It opens the setting. Come back and " +
+                        "check again.",
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        needsPermission = false
+                        openInstallPermissionSettings(context)
+                    }
+                ) { Text("Open settings") }
+            },
+            dismissButton = {
+                TextButton(onClick = { needsPermission = false }) { Text("Not now") }
             },
         )
     }

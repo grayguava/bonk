@@ -19,8 +19,10 @@ a number (how many whole days your current streak has run) and gets out of the w
   home screen only. Every other page names itself.
 - **A backup you can carry.** The About page writes your name and every streak to a file you
   pick, and reads one back on another device.
-- **An About page** with the app details, the device it is running on, a link to the repo, and
-  a check for a newer release that only ever runs when you ask for it.
+- **An About page** with the app details, the device it is running on, and a link to the repo.
+- **A check for updates.** The About page asks github for the newest release and downloads it
+  only when you say yes. The download is checked against the checksum the release published
+  before android is asked to install it.
 
 ## The tiers
 

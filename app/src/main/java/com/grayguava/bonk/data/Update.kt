@@ -4,17 +4,18 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
-import java.io.File
+import java.io.OutputStream
 import java.net.HttpURLConnection
 import java.net.URL
 
 const val RELEASES_API = "https://api.github.com/repos/grayguava/bonk/releases/latest"
 
-/** A published release, and the apk it carries. */
+/** A published release, and the files it carries. */
 data class Release(
     val tag: String,
     val version: String,
     val apkUrl: String?,
+    val checksumUrl: String?,
 )
 
 /** The latest release from the github api, or null when the answer has no release in it. */
@@ -25,14 +26,17 @@ fun parseLatestRelease(json: String): Release? {
 
     val assets = root.optJSONArray("assets")
     var apkUrl: String? = null
+    var checksumUrl: String? = null
     for (index in 0 until (assets?.length() ?: 0)) {
         val asset = assets!!.getJSONObject(index)
-        if (asset.optString("name").endsWith(".apk")) {
-            apkUrl = asset.optString("browser_download_url").takeIf { it.isNotBlank() }
-            break
+        val name = asset.optString("name")
+        val url = asset.optString("browser_download_url").takeIf { it.isNotBlank() }
+        when {
+            name.endsWith(".apk") -> apkUrl = url
+            name.endsWith(".apk.sha256") -> checksumUrl = url
         }
     }
-    return Release(tag = "v$tag", version = tag, apkUrl = apkUrl)
+    return Release(tag = "v$tag", version = tag, apkUrl = apkUrl, checksumUrl = checksumUrl)
 }
 
 /** Is [candidate] a later version than [current]? */
@@ -49,6 +53,16 @@ private fun versionParts(version: String): List<Int>? =
     version.trim().removePrefix("v").split(".")
         .mapNotNull { it.toIntOrNull() }
         .takeIf { it.size == 3 }
+
+/**
+ * The checksum out of a `sha256sum` line: the hash, then the name of the file.
+ *
+ * Null when the line holds nothing that could be a hash.
+ */
+fun parseChecksum(text: String): String? =
+    text.trim().split(Regex("\\s+")).firstOrNull()
+        ?.lowercase()
+        ?.takeIf { it.length == 64 && it.all { c -> c in "0123456789abcdef" } }
 
 /** Ask github for the latest release. Null when there is none, or when the call fails. */
 suspend fun fetchLatestRelease(url: String = RELEASES_API): Release? = withContext(Dispatchers.IO) {
@@ -69,15 +83,32 @@ suspend fun fetchLatestRelease(url: String = RELEASES_API): Release? = withConte
     }
 }
 
+/** The checksum a release published for its apk. Null when there is none to be had. */
+suspend fun fetchChecksum(url: String): String? = withContext(Dispatchers.IO) {
+    val connection = (URL(url).openConnection() as HttpURLConnection).apply {
+        connectTimeout = 15_000
+        readTimeout = 15_000
+    }
+    try {
+        if (connection.responseCode !in 200..299) return@withContext null
+        parseChecksum(connection.inputStream.bufferedReader().use { it.readText() })
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        null
+    } finally {
+        connection.disconnect()
+    }
+}
+
 /**
- * Download an apk to [target], reporting how far it has got as it goes.
+ * Copy the bytes at [url] into [out], reporting how far it has got as it goes.
  *
- * False when the download did not finish. A half-written file is deleted, so a later
- * attempt cannot install a truncated apk.
+ * False when the transfer did not finish.
  */
-suspend fun downloadApk(
+suspend fun downloadTo(
     url: String,
-    target: File,
+    out: OutputStream,
     onProgress: (downloaded: Long, total: Long) -> Unit = { _, _ -> },
 ): Boolean = withContext(Dispatchers.IO) {
     val connection = (URL(url).openConnection() as HttpURLConnection).apply {
@@ -87,31 +118,22 @@ suspend fun downloadApk(
     }
     try {
         if (connection.responseCode !in 200..299) return@withContext false
-        target.parentFile?.mkdirs()
         val total = connection.contentLengthLong
         var downloaded = 0L
         connection.inputStream.use { input ->
-            target.outputStream().use { output ->
-                val buffer = ByteArray(64 * 1024)
-                while (true) {
-                    val read = input.read(buffer)
-                    if (read < 0) break
-                    output.write(buffer, 0, read)
-                    downloaded += read
-                    onProgress(downloaded, total)
-                }
+            val buffer = ByteArray(64 * 1024)
+            while (true) {
+                val read = input.read(buffer)
+                if (read < 0) break
+                out.write(buffer, 0, read)
+                downloaded += read
+                onProgress(downloaded, total)
             }
-        }
-        if (target.length() <= 0) {
-            target.delete()
-            return@withContext false
         }
         true
     } catch (e: CancellationException) {
-        target.delete()
         throw e
     } catch (e: Exception) {
-        target.delete()
         false
     } finally {
         connection.disconnect()
