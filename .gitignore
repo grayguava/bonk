@@ -9,6 +9,9 @@ build/
 # Local machine config
 local.properties
 
+# Machine-local helper scripts
+.localscripts/
+
 # Android
 *.apk
 *.aab
