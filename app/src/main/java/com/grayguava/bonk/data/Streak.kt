@@ -67,38 +67,55 @@ class StreakStore(context: Context) {
         }
 
     /** Finished streaks, newest first. */
-    fun history(): List<StreakRecord> {
-        val raw = prefs.getString(KEY_HISTORY, null) ?: return emptyList()
-        return runCatching {
-            val array = JSONArray(raw)
-            (0 until array.length()).map { index ->
-                val item = array.getJSONObject(index)
-                StreakRecord(
-                    startTime = item.getLong("start"),
-                    resetTime = item.getLong("reset"),
-                    days = item.getInt("days"),
-                    reason = item.optString("reason"),
-                )
-            }
-        }.getOrDefault(emptyList())
-    }
+    fun history(): List<StreakRecord> = parseHistory(prefs.getString(KEY_HISTORY, null))
 
     fun add(record: StreakRecord) {
-        val array = JSONArray()
-        array.put(record.toJson())
-        history().forEach { array.put(it.toJson()) }
-        prefs.edit().putString(KEY_HISTORY, array.toString()).apply()
+        prefs.edit().putString(KEY_HISTORY, historyJson(listOf(record) + history())).apply()
     }
 
-    private fun StreakRecord.toJson(): JSONObject = JSONObject().apply {
-        put("start", startTime)
-        put("reset", resetTime)
-        put("days", days)
-        put("reason", reason)
+    /** Replace everything with what a backup holds. */
+    fun restore(currentStart: Long?, history: List<StreakRecord>) {
+        prefs.edit()
+            .putString(KEY_HISTORY, historyJson(history))
+            .apply { if (currentStart == null) remove(KEY_CURRENT) else putLong(KEY_CURRENT, currentStart) }
+            .apply()
     }
 
     private companion object {
         const val KEY_CURRENT = "current_start"
         const val KEY_HISTORY = "history"
     }
+}
+
+/** The finished streaks as JSON, newest first. */
+fun historyJson(history: List<StreakRecord>): String {
+    val array = JSONArray()
+    history.forEach { record ->
+        array.put(
+            JSONObject().apply {
+                put("start", record.startTime)
+                put("reset", record.resetTime)
+                put("days", record.days)
+                put("reason", record.reason)
+            }
+        )
+    }
+    return array.toString()
+}
+
+/** The finished streaks from JSON. Anything unreadable reads as no streaks. */
+fun parseHistory(raw: String?): List<StreakRecord> {
+    if (raw.isNullOrBlank()) return emptyList()
+    return runCatching {
+        val array = JSONArray(raw)
+        (0 until array.length()).map { index ->
+            val item = array.getJSONObject(index)
+            StreakRecord(
+                startTime = item.getLong("start"),
+                resetTime = item.getLong("reset"),
+                days = item.getInt("days"),
+                reason = item.optString("reason"),
+            )
+        }
+    }.getOrDefault(emptyList())
 }
