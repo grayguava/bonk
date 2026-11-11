@@ -15,3 +15,7 @@ plugins {
     alias(libs.plugins.android.application) apply false
     alias(libs.plugins.compose.compiler) apply false
 }
+
+// The root project produces no artefacts, only reports, and those go with the rest
+// of the machine-local build state so the root of the repository stays readable.
+layout.buildDirectory.set(layout.projectDirectory.dir(".gradle/build"))
