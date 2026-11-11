@@ -78,6 +78,19 @@ android {
     }
 }
 
+// The debug build always says it is 0.1.0, so the update check finds the newest
+// published release and the whole flow can be tried on a device.
+androidComponents {
+    onVariants { variant ->
+        if (variant.buildType == "debug") {
+            variant.outputs.forEach { output ->
+                output.versionName.set("0.1.0")
+                output.versionCode.set(100)
+            }
+        }
+    }
+}
+
 dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.activity.compose)

@@ -61,6 +61,16 @@ v0.2.0_universal.apk.sha256
 The APK holds every processor type. The `.sha256` file is the standard `sha256sum` line, so
 `sha256sum -c v0.2.0_universal.apk.sha256` checks it.
 
+## Trying an update
+
+The debug build always reports version 0.1.0, whatever the version file says, so the update
+check always finds the newest published release. Install the debug build, open the about page
+and press *Check for updates*.
+
+The apk that comes down is the real signed release, and it installs beside the debug build
+rather than over it: the two have different application ids. Android asks before installing
+anything, and wants the "install unknown apps" permission for whichever app opens the file.
+
 ## Building a signed release locally
 
 ```bash
