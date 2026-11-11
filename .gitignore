@@ -6,13 +6,8 @@ build/
 # Kotlin
 .kotlin/
 
-# Local machine config — the SDK path lives here
+# Local machine config
 local.properties
-
-# The release version. Not tracked yet: the release workflow watches this file, so
-# tracking it would start a release on every push that touches it. Add it back with
-# "git add -f version" when the first release is ready.
-version
 
 # Android
 *.apk
@@ -23,12 +18,12 @@ captures/
 .cxx/
 release/
 
-# Signing material — never commit these
+# Signing material
 *.jks
 *.keystore
 keystore.properties
 
-# Working notes from the anti-slop audits. Not part of the project.
+# Working notes from the antislop audits
 anti-slop/
 
 # IDEs
