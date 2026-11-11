@@ -38,6 +38,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
@@ -48,6 +49,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -69,11 +72,13 @@ import com.grayguava.bonk.data.UserStore
 import com.grayguava.bonk.data.exportBackup
 import com.grayguava.bonk.data.importBackup
 import com.grayguava.bonk.ui.theme.CardSurface
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import java.util.Locale
 import androidx.compose.material3.ButtonDefaults
 import androidx.core.content.FileProvider
 import com.grayguava.bonk.data.Release
@@ -85,6 +90,23 @@ import java.io.File
 /** Where the app lives. Change these when the repo moves. */
 private const val REPO_URL = "https://github.com/grayguava/bonk"
 private const val ISSUES_URL = "$REPO_URL/issues"
+
+/** The shape of the dialogs, so their hairline follows the corners. */
+private val DialogShape = RoundedCornerShape(28.dp)
+
+/** What the download has got so far, in words. */
+private fun downloadLabel(downloaded: Long, total: Long): String =
+    if (total > 0) {
+        "${downloaded * 100 / total}% - ${formatSize(downloaded)} of ${formatSize(total)}"
+    } else {
+        formatSize(downloaded)
+    }
+
+private fun formatSize(bytes: Long): String = when {
+    bytes < 1024 -> "$bytes B"
+    bytes < 1024 * 1024 -> "${bytes / 1024} KB"
+    else -> String.format(Locale.US, "%.1f MB", bytes / (1024.0 * 1024.0))
+}
 
 /** The page behind the "i" button: what this app is, and where to find it. */
 @Composable
@@ -149,6 +171,11 @@ fun AboutScreen(
 
     var checking by remember { mutableStateOf(false) }
     var available by remember { mutableStateOf<Release?>(null) }
+    var downloading by remember { mutableStateOf(false) }
+    var progress by remember { mutableFloatStateOf(0f) }
+    var downloadedBytes by remember { mutableLongStateOf(0L) }
+    var totalBytes by remember { mutableLongStateOf(0L) }
+    var downloadJob by remember { mutableStateOf<Job?>(null) }
 
     // Check first, then ask: nothing is downloaded and nothing is installed until the
     // user says yes.
@@ -163,6 +190,51 @@ fun AboutScreen(
                 !isNewerVersion(release.version, details.versionName) ->
                     snackbarHostState.showSnackbar("You are on the latest release.")
                 else -> available = release
+            }
+        }
+    }
+
+    // The download happens in the dialog, where the progress bar can show it. When it
+    // finishes, the apk goes to the system installer.
+    fun startDownload(release: Release) {
+        val url = release.apkUrl ?: return
+        downloadJob = scope.launch {
+            downloading = true
+            progress = 0f
+            downloadedBytes = 0L
+            totalBytes = 0L
+            val file = File(context.cacheDir, "updates/bonk-${release.version}.apk")
+            try {
+                val done = downloadApk(url, file) { done, total ->
+                    downloadedBytes = done
+                    totalBytes = total
+                    progress = if (total > 0) done.toFloat() / total else 0f
+                }
+                if (!done) {
+                    snackbarHostState.showSnackbar("The download did not finish.")
+                    return@launch
+                }
+                progress = 1f
+                available = null
+                val uri = FileProvider.getUriForFile(
+                    context,
+                    "${context.packageName}.fileprovider",
+                    file,
+                )
+                runCatching {
+                    context.startActivity(
+                        Intent(Intent.ACTION_VIEW).apply {
+                            setDataAndType(uri, "application/vnd.android.package-archive")
+                            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                        }
+                    )
+                }.onFailure {
+                    Log.e("Bonk", "could not start the installer", it)
+                    snackbarHostState.showSnackbar("Could not open the installer.")
+                }
+            } finally {
+                downloading = false
+                downloadJob = null
             }
         }
     }
@@ -403,59 +475,68 @@ fun AboutScreen(
     val update = available
     if (update != null) {
         AlertDialog(
-            onDismissRequest = { available = null },
+            onDismissRequest = { if (!downloading) available = null },
+            // The page is pure black, so the dialog needs a hairline to be seen at all.
+            modifier = Modifier.border(1.dp, Color.White.copy(alpha = 0.12f), DialogShape),
+            shape = DialogShape,
             containerColor = Color(0xFF0A0A0A),
             titleContentColor = Color.White,
             textContentColor = Color.White.copy(alpha = 0.7f),
             title = {
                 Text(
-                    text = "Version ${update.version} is out",
+                    text = if (downloading) {
+                        "Downloading ${update.version}"
+                    } else {
+                        "Version ${update.version} is out"
+                    },
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                 )
             },
             text = {
-                Text(
-                    text = "You are on ${details.versionName}. Install the newer one?",
-                    style = MaterialTheme.typography.bodyMedium,
-                )
+                if (downloading) {
+                    Column {
+                        if (totalBytes > 0) {
+                            LinearProgressIndicator(
+                                progress = { progress },
+                                color = Color.White,
+                                trackColor = Color.White.copy(alpha = 0.15f),
+                                modifier = Modifier.fillMaxWidth(),
+                            )
+                        } else {
+                            LinearProgressIndicator(
+                                color = Color.White,
+                                trackColor = Color.White.copy(alpha = 0.15f),
+                                modifier = Modifier.fillMaxWidth(),
+                            )
+                        }
+                        Spacer(Modifier.height(12.dp))
+                        Text(
+                            text = downloadLabel(downloadedBytes, totalBytes),
+                            style = MaterialTheme.typography.bodyMedium,
+                        )
+                    }
+                } else {
+                    Text(
+                        text = "You are on ${details.versionName}. Install the newer one?",
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                }
             },
             confirmButton = {
-                TextButton(
-                    enabled = update.apkUrl != null,
-                    onClick = {
-                        val url = update.apkUrl
-                        available = null
-                        if (url == null) return@TextButton
-                        scope.launch {
-                            snackbarHostState.showSnackbar("Downloading ${update.version}.")
-                            val file = File(context.cacheDir, "updates/bonk-${update.version}.apk")
-                            if (!downloadApk(url, file)) {
-                                snackbarHostState.showSnackbar("The download did not finish.")
-                                return@launch
-                            }
-                            val uri = FileProvider.getUriForFile(
-                                context,
-                                "${context.packageName}.fileprovider",
-                                file,
-                            )
-                            runCatching {
-                                context.startActivity(
-                                    Intent(Intent.ACTION_VIEW).apply {
-                                        setDataAndType(uri, "application/vnd.android.package-archive")
-                                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                                    }
-                                )
-                            }.onFailure {
-                                Log.e("Bonk", "could not start the installer", it)
-                                snackbarHostState.showSnackbar("Could not open the installer.")
-                            }
-                        }
-                    }
-                ) { Text("Install") }
+                if (downloading) {
+                    TextButton(onClick = { downloadJob?.cancel() }) { Text("Cancel") }
+                } else {
+                    TextButton(
+                        enabled = update.apkUrl != null,
+                        onClick = { startDownload(update) },
+                    ) { Text("Install") }
+                }
             },
             dismissButton = {
-                TextButton(onClick = { available = null }) { Text("Later") }
+                if (!downloading) {
+                    TextButton(onClick = { available = null }) { Text("Later") }
+                }
             },
         )
     }
@@ -464,6 +545,8 @@ fun AboutScreen(
     if (backup != null) {
         AlertDialog(
             onDismissRequest = { pendingRestore = null },
+            modifier = Modifier.border(1.dp, Color.White.copy(alpha = 0.12f), DialogShape),
+            shape = DialogShape,
             containerColor = Color(0xFF0A0A0A),
             titleContentColor = Color.White,
             textContentColor = Color.White.copy(alpha = 0.7f),

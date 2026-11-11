@@ -1,5 +1,6 @@
 package com.grayguava.bonk.data
 
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
@@ -59,6 +60,8 @@ suspend fun fetchLatestRelease(url: String = RELEASES_API): Release? = withConte
     try {
         if (connection.responseCode !in 200..299) return@withContext null
         parseLatestRelease(connection.inputStream.bufferedReader().use { it.readText() })
+    } catch (e: CancellationException) {
+        throw e
     } catch (e: Exception) {
         null
     } finally {
@@ -66,8 +69,17 @@ suspend fun fetchLatestRelease(url: String = RELEASES_API): Release? = withConte
     }
 }
 
-/** Download an apk to [target]. False when the download did not finish. */
-suspend fun downloadApk(url: String, target: File): Boolean = withContext(Dispatchers.IO) {
+/**
+ * Download an apk to [target], reporting how far it has got as it goes.
+ *
+ * False when the download did not finish. A half-written file is deleted, so a later
+ * attempt cannot install a truncated apk.
+ */
+suspend fun downloadApk(
+    url: String,
+    target: File,
+    onProgress: (downloaded: Long, total: Long) -> Unit = { _, _ -> },
+): Boolean = withContext(Dispatchers.IO) {
     val connection = (URL(url).openConnection() as HttpURLConnection).apply {
         connectTimeout = 15_000
         readTimeout = 30_000
@@ -76,11 +88,30 @@ suspend fun downloadApk(url: String, target: File): Boolean = withContext(Dispat
     try {
         if (connection.responseCode !in 200..299) return@withContext false
         target.parentFile?.mkdirs()
+        val total = connection.contentLengthLong
+        var downloaded = 0L
         connection.inputStream.use { input ->
-            target.outputStream().use { output -> input.copyTo(output) }
+            target.outputStream().use { output ->
+                val buffer = ByteArray(64 * 1024)
+                while (true) {
+                    val read = input.read(buffer)
+                    if (read < 0) break
+                    output.write(buffer, 0, read)
+                    downloaded += read
+                    onProgress(downloaded, total)
+                }
+            }
         }
-        target.length() > 0
+        if (target.length() <= 0) {
+            target.delete()
+            return@withContext false
+        }
+        true
+    } catch (e: CancellationException) {
+        target.delete()
+        throw e
     } catch (e: Exception) {
+        target.delete()
         false
     } finally {
         connection.disconnect()
