@@ -71,53 +71,18 @@ Material 3. See [docs/architecture.md](docs/architecture.md) for how it all fits
 
 ## Releases
 
-Nobody needs a signing key to work on the app. Debug builds are all you need locally, and the
-release build falls back to the debug key when no key is configured, so it still installs.
-
-The version lives in the `version` file at the root of the repository. Bump it and push to
-`main`: the release workflow reads that file, refuses to run if the tag already exists,
-builds a signed APK, and leaves a draft release with the notes template filled in for you to
-finish and publish. The release carries two files:
+Each release is one signed APK that runs on any Android device from 8.0 up, with its
+checksum beside it:
 
 ```
 v0.1.0_universal.apk
 v0.1.0_universal.apk.sha256
 ```
 
-The APK runs on every processor type. The `.sha256` file is the standard `sha256sum` line,
-so `sha256sum -c v0.1.0_universal.apk.sha256` checks it.
+Download the APK from the releases page and install it, or build it yourself with the commands
+above. `sha256sum -c v0.1.0_universal.apk.sha256` checks the download.
 
-The repository needs four secrets:
-
-| Secret | What it is |
-| --- | --- |
-| `BONK_KEYSTORE_BASE64` | the keystore file, base64 encoded |
-| `BONK_KEYSTORE_PASSWORD` | the keystore password |
-| `BONK_KEY_ALIAS` | the key alias |
-| `BONK_KEY_PASSWORD` | the key password |
-
-Generate the keystore once, with the JDK's `keytool`:
-
-```bash
-keytool -genkey -v -keystore bonk-release.jks -keyalg RSA -keysize 4096 -validity 10000 -alias bonk
-base64 -w0 bonk-release.jks > bonk-release.jks.b64
-```
-
-The workflow refuses to publish an APK signed with the debug key, and the checksum is
-verified twice, once before the artifact is uploaded and once after it is downloaded.
-
-To build a signed release yourself, point the build at the keystore:
-
-```bash
-export BONK_KEYSTORE="$PWD/bonk-release.jks"
-export BONK_KEYSTORE_PASSWORD=...
-export BONK_KEY_ALIAS=bonk
-export BONK_KEY_PASSWORD=...
-./gradlew :app:assembleRelease
-```
-
-Keep the keystore somewhere you control. If it is lost, a build signed with a new key cannot
-upgrade an installed copy of the app, so people have to uninstall it first and install again.
+Maintainers: [docs/releasing.md](docs/releasing.md) covers how a release is made.
 
 ## Layout
 
