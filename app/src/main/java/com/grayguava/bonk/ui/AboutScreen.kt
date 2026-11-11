@@ -74,6 +74,13 @@ import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import androidx.compose.material3.ButtonDefaults
+import androidx.core.content.FileProvider
+import com.grayguava.bonk.data.Release
+import com.grayguava.bonk.data.downloadApk
+import com.grayguava.bonk.data.fetchLatestRelease
+import com.grayguava.bonk.data.isNewerVersion
+import java.io.File
 
 /** Where the app lives. Change these when the repo moves. */
 private const val REPO_URL = "https://github.com/grayguava/bonk"
@@ -139,6 +146,26 @@ fun AboutScreen(
 
     val details = remember { appDetails(context) }
     val topDrop = screenTopGap()
+
+    var checking by remember { mutableStateOf(false) }
+    var available by remember { mutableStateOf<Release?>(null) }
+
+    // Check first, then ask: nothing is downloaded and nothing is installed until the
+    // user says yes.
+    val checkForUpdate = {
+        checking = true
+        scope.launch {
+            val release = fetchLatestRelease()
+            checking = false
+            when {
+                release == null ->
+                    snackbarHostState.showSnackbar("Could not reach github.")
+                !isNewerVersion(release.version, details.versionName) ->
+                    snackbarHostState.showSnackbar("You are on the latest release.")
+                else -> available = release
+            }
+        }
+    }
 
     // The page scales with the width it has. dp is a physical unit, so density is
     // already handled; what differs is how much screen the app gets, and that is the
@@ -326,8 +353,111 @@ fun AboutScreen(
                     }
                 }
             }
+            Spacer(Modifier.height(16.dp))
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = CardSurface),
+            ) {
+                Column(Modifier.padding(cardPadding)) {
+                    Text(
+                        text = "Updates",
+                        style = MaterialTheme.typography.titleLarge.copy(fontSize = cardTitleSize),
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White,
+                    )
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        text = "See whether a newer release is out.",
+                        style = bodyStyle,
+                        color = Color.White.copy(alpha = 0.55f),
+                    )
+                    Spacer(Modifier.height(20.dp * scale))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.End,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Button(
+                            onClick = { checkForUpdate() },
+                            enabled = !checking,
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color.White,
+                                contentColor = Color.Black,
+                                disabledContainerColor = Color.White.copy(alpha = 0.3f),
+                                disabledContentColor = Color.Black.copy(alpha = 0.5f),
+                            ),
+                        ) {
+                            Text(
+                                text = if (checking) "Checking" else "Check for updates",
+                                style = MaterialTheme.typography.labelLarge.copy(fontSize = 14.sp * scale),
+                            )
+                        }
+                    }
+                }
+            }
             Spacer(Modifier.height(32.dp))
         }
+    }
+
+    val update = available
+    if (update != null) {
+        AlertDialog(
+            onDismissRequest = { available = null },
+            containerColor = Color(0xFF0A0A0A),
+            titleContentColor = Color.White,
+            textContentColor = Color.White.copy(alpha = 0.7f),
+            title = {
+                Text(
+                    text = "Version ${update.version} is out",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                )
+            },
+            text = {
+                Text(
+                    text = "You are on ${details.versionName}. Install the newer one?",
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    enabled = update.apkUrl != null,
+                    onClick = {
+                        val url = update.apkUrl
+                        available = null
+                        if (url == null) return@TextButton
+                        scope.launch {
+                            snackbarHostState.showSnackbar("Downloading ${update.version}.")
+                            val file = File(context.cacheDir, "updates/bonk-${update.version}.apk")
+                            if (!downloadApk(url, file)) {
+                                snackbarHostState.showSnackbar("The download did not finish.")
+                                return@launch
+                            }
+                            val uri = FileProvider.getUriForFile(
+                                context,
+                                "${context.packageName}.fileprovider",
+                                file,
+                            )
+                            runCatching {
+                                context.startActivity(
+                                    Intent(Intent.ACTION_VIEW).apply {
+                                        setDataAndType(uri, "application/vnd.android.package-archive")
+                                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                    }
+                                )
+                            }.onFailure {
+                                Log.e("Bonk", "could not start the installer", it)
+                                snackbarHostState.showSnackbar("Could not open the installer.")
+                            }
+                        }
+                    }
+                ) { Text("Install") }
+            },
+            dismissButton = {
+                TextButton(onClick = { available = null }) { Text("Later") }
+            },
+        )
     }
 
     val backup = pendingRestore
