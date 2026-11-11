@@ -80,6 +80,8 @@ import com.grayguava.bonk.data.installApk
 import com.grayguava.bonk.data.openInstallPermissionSettings
 import com.grayguava.bonk.ui.theme.CardSurface
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.LocalDateTime
@@ -97,6 +99,22 @@ private const val ISSUES_URL = "$REPO_URL/issues"
 
 /** The shape of the dialogs, so their hairline follows the corners. */
 private val DialogShape = RoundedCornerShape(28.dp)
+
+/**
+ * The message at the bottom, for three seconds rather than the usual four.
+ *
+ * Material has no length for that, so the message is dismissed early.
+ */
+private suspend fun SnackbarHostState.showBriefly(message: String) {
+    coroutineScope {
+        val dismiss = launch {
+            delay(3000)
+            currentSnackbarData?.dismiss()
+        }
+        showSnackbar(message)
+        dismiss.cancel()
+    }
+}
 
 /** What the download has got so far, in words. */
 private fun downloadLabel(downloaded: Long, total: Long): String =
@@ -132,7 +150,7 @@ fun AboutScreen(
         ActivityResultContracts.CreateDocument("application/json")
     ) { uri ->
         if (uri == null) {
-            scope.launch { snackbarHostState.showSnackbar("Backup cancelled.") }
+            scope.launch { snackbarHostState.showBriefly("Backup cancelled.") }
             return@rememberLauncherForActivityResult
         }
         val result = runCatching {
@@ -147,7 +165,7 @@ fun AboutScreen(
         result.onFailure { Log.e("Bonk", "backup failed", it) }
         result.onSuccess { Log.i("Bonk", "backup written, ${it} bytes") }
         scope.launch {
-            snackbarHostState.showSnackbar(
+            snackbarHostState.showBriefly(
                 result.fold(
                     onSuccess = { "Backup saved." },
                     onFailure = { "Could not write the backup." },
@@ -164,7 +182,7 @@ fun AboutScreen(
             context.contentResolver.openInputStream(uri)?.use { it.readBytes().toString(Charsets.UTF_8) }
         }.getOrNull()?.let { runCatching { importBackup(it) }.getOrNull() }
         if (parsed == null) {
-            scope.launch { snackbarHostState.showSnackbar("That file is not a Bonk! backup.") }
+            scope.launch { snackbarHostState.showBriefly("That file is not a Bonk! backup.") }
         } else {
             pendingRestore = parsed
         }
@@ -187,9 +205,9 @@ fun AboutScreen(
         InstallEvents.results.collect { result ->
             when (result) {
                 is InstallResult.Installed ->
-                    snackbarHostState.showSnackbar("Updated to ${result.version}.")
+                    snackbarHostState.showBriefly("Updated to ${result.version}.")
                 is InstallResult.Refused ->
-                    snackbarHostState.showSnackbar(result.reason)
+                    snackbarHostState.showBriefly(result.reason)
             }
         }
     }
@@ -203,9 +221,9 @@ fun AboutScreen(
             checking = false
             when {
                 release == null ->
-                    snackbarHostState.showSnackbar("Could not reach github.")
+                    snackbarHostState.showBriefly("Could not reach github.")
                 !isNewerVersion(release.version, details.versionName) ->
-                    snackbarHostState.showSnackbar("You are on the latest release.")
+                    snackbarHostState.showBriefly("You are on the latest release.")
                 else -> available = release
             }
         }
@@ -230,7 +248,7 @@ fun AboutScreen(
                         available = null
                     }
                     is InstallOutcome.Broken ->
-                        snackbarHostState.showSnackbar(outcome.reason)
+                        snackbarHostState.showBriefly(outcome.reason)
                 }
             } finally {
                 downloading = false
@@ -487,7 +505,10 @@ fun AboutScreen(
         AlertDialog(
             onDismissRequest = { if (!downloading) available = null },
             // The page is pure black, so the dialog needs a hairline to be seen at all.
-            modifier = Modifier.border(1.dp, Color.White.copy(alpha = 0.12f), DialogShape),
+            // It is also a tenth wider than the text alone would make it.
+            modifier = Modifier
+                .fillMaxWidth(0.92f)
+                .border(1.dp, Color.White.copy(alpha = 0.12f), DialogShape),
             shape = DialogShape,
             containerColor = Color(0xFF0A0A0A),
             titleContentColor = Color.White,
@@ -497,7 +518,7 @@ fun AboutScreen(
                     text = if (downloading) {
                         "Downloading ${update.version}"
                     } else {
-                        "Version ${update.version} is out"
+                        "v${update.version} is now out 🎉"
                     },
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
@@ -505,7 +526,7 @@ fun AboutScreen(
             },
             text = {
                 if (downloading) {
-                    Column {
+                    Column(Modifier.fillMaxWidth()) {
                         if (totalBytes > 0) {
                             LinearProgressIndicator(
                                 progress = { progress },
@@ -530,6 +551,7 @@ fun AboutScreen(
                     Text(
                         text = "You are on ${details.versionName}. Install the newer one?",
                         style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.fillMaxWidth(),
                     )
                 }
             },
@@ -619,7 +641,7 @@ fun AboutScreen(
                         userStore.name = backup.name
                         pendingRestore = null
                         onRestore()
-                        scope.launch { snackbarHostState.showSnackbar("Restored.") }
+                        scope.launch { snackbarHostState.showBriefly("Restored.") }
                     }
                 ) { Text("Restore", style = MaterialTheme.typography.labelLarge.copy(fontSize = 14.sp * scale)) }
             },
