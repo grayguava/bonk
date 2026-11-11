@@ -21,6 +21,9 @@ captures/
 .cxx/
 release/
 
+# Finished apks, kept at the front door
+/bin/
+
 # Signing material
 *.jks
 *.keystore

@@ -97,6 +97,19 @@ androidComponents {
     }
 }
 
+// A finished apk goes to a bin folder at the root of the repository, so it is
+// where you expect it: bin/app-debug.apk, bin/app-release.apk.
+val bin = rootProject.layout.projectDirectory.dir("bin")
+
+listOf("debug" to "Debug", "release" to "Release").forEach { (type, name) ->
+    val publish = tasks.register<Copy>("publish${name}Apk") {
+        from(layout.buildDirectory.dir("outputs/apk/$type"))
+        into(bin)
+        include("*.apk")
+    }
+    tasks.matching { it.name == "assemble$name" }.configureEach { finalizedBy(publish) }
+}
+
 dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.activity.compose)
