@@ -64,10 +64,23 @@ jobs:
           distribution: temurin
           java-version: '21'
 
-      - uses: android-actions/setup-android@v3
+      # The runner ships an Android SDK with a current command-line-tools, so the
+      # packages the build needs are installed with it directly.
+      - name: Install the Android SDK packages
+        run: |
+          set -euo pipefail
+          sdkmanager="$(ls -d "$ANDROID_HOME"/cmdline-tools/*/bin/sdkmanager 2>/dev/null | tail -1 || true)"
+          if [ -z "$sdkmanager" ]; then
+            sdkmanager="$(command -v sdkmanager)"
+          fi
+          yes | "$sdkmanager" --licenses > /dev/null || true
+          "$sdkmanager" "platforms;android-37.0" "build-tools;36.0.0" "platform-tools"
 
       - name: Run tests
         run: ./gradlew :app:testDebugUnitTest
+
+      - name: Lint
+        run: ./gradlew :app:lintDebug
 
   build:
     needs:
