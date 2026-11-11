@@ -72,6 +72,7 @@ fun BonkScreen() {
 private fun BonkHome(name: String) {
     val context = LocalContext.current
     val store = remember { StreakStore(context) }
+    val userStore = remember { UserStore(context) }
 
     var selectedTab by remember { mutableIntStateOf(0) }
     var streakStart by remember { mutableStateOf(store.currentStart) }
@@ -89,7 +90,15 @@ private fun BonkHome(name: String) {
     BackHandler(enabled = showAbout) { showAbout = false }
 
     if (showAbout) {
-        AboutScreen(onBack = { showAbout = false })
+        AboutScreen(
+            onBack = { showAbout = false },
+            streakStore = store,
+            userStore = userStore,
+            onRestore = {
+                streakStart = store.currentStart
+                history = store.history()
+            },
+        )
         return
     }
 
