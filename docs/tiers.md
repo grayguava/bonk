@@ -43,7 +43,7 @@ count, so it creeps forward second by second rather than jumping once a day:
 progress = (elapsedDays - currentLevel.days) / (nextLevel.days - currentLevel.days)
 ```
 
-The level itself is still measured in whole days — that is what the tiers mean.
+The level itself is still measured in whole days, which is what the tiers mean.
 
 ## The badges
 
@@ -52,7 +52,7 @@ as an icon. The marks are:
 
 | Tier | Mark |
 | --- | --- |
-| Awakening | a sapling — a stem and two leaves |
+| Awakening | a sapling: a stem and two leaves |
 | Building | three blocks, each taller than the last |
 | Strength | a mountain |
 | Mastery | a cut gem |

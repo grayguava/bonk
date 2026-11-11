@@ -34,12 +34,12 @@ Everything lives in `BonkScreen` as Compose state and is written straight throug
 | State | Where it lives |
 | --- | --- |
 | The running streak's start time | `StreakStore.currentStart` |
-| Finished streaks | `StreakStore.history` — a JSON array, newest first |
+| Finished streaks | `StreakStore.history`, a JSON array, newest first |
 | Your name | `UserStore.name` |
 
 There is no `ViewModel` and no `StateFlow`. The state is small enough that recomposition
 costs nothing, and the app never survives a configuration change with anything worth
-restoring — the persisted copy is the source of truth.
+restoring. The persisted copy is the source of truth.
 
 `StreakStore` and `UserStore` are thin wrappers over two `SharedPreferences` files (`bonk`
 and `bonk_user`). They are deliberately simple: the schema is small, and swapping them for
@@ -57,7 +57,7 @@ when (selectedTab) {
 }
 ```
 
-The About page is not a tab — it is a boolean that replaces the whole scaffold, with a
+The About page is not a tab. It is a boolean that replaces the whole scaffold, with a
 `BackHandler` so the system back button returns instead of exiting.
 
 ## The streak model
@@ -78,7 +78,7 @@ its own.
 `BottomDock.kt` is a port of the tab bar from
 [OpenTune](https://github.com/justshivv/Opentune) (MIT-licensed, used as a reference).
 The interesting part is the **lens**: the indicator is a box whose two edges travel
-separately — the leading edge springs out ahead and the trailing edge catches up late, so
+separately: the leading edge springs out ahead and the trailing edge catches up late, so
 the lens stretches toward the new tab and wobbles home.
 
 The springs, the crossfades and the shape metrics are all in `BottomDock.kt` with the

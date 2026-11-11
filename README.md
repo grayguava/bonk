@@ -3,23 +3,19 @@
 **A streak counter that greets you by name.**
 
 Bonk! is a small, deliberately quiet Android app for one job: keeping a streak alive. It shows
-a number — how many whole days your current streak has run — and gets out of the way.
-
-<p align="center">
-  <em>one number, one line of encouragement, nothing else</em>
-</p>
+a number (how many whole days your current streak has run) and gets out of the way.
 
 ## What it does
 
 - **A streak that runs on a timer.** Press *Start streak* and the clock begins; the counter is
-  the number of whole days elapsed. Press *Reset streak* when it ends, and you have to say why —
-  the reason is required, so the history means something later.
+  the number of whole days elapsed. Press *Reset streak* when it ends, and you have to say why.
+  The reason is required, so the history means something later.
 - **Ten levels in five tiers.** *Awakening → Building → Strength → Mastery → Transcendence*,
   each with its own badge. The Levels tab tracks how far through the current level you are,
   to the second.
 - **A history that remembers.** Every finished streak is a card: how long it lasted and why it
   ended. Tap it to see when it started and when it was reset.
-- **A greeting that knows the time.** "Good morning," / "Late night," over your name — on the
+- **A greeting that knows the time.** "Good morning," / "Late night," over your name, on the
   home screen only. Every other page names itself.
 - **An About page** with the app details, the device it is running on, and a link to the repo.
 
@@ -37,8 +33,8 @@ Full detail, including how each badge is drawn: [docs/tiers.md](docs/tiers.md).
 
 ## Installing
 
-Grab an APK from the releases page and install it (you will need to allow installs from your
-browser or file manager), or build it yourself:
+Grab an APK from the [releases page](https://github.com/grayguava/bonk/releases) and install it
+(you will need to allow installs from your browser or file manager), or build it yourself:
 
 ```bash
 adb install -r app-debug.apk
@@ -47,7 +43,7 @@ adb install -r app-debug.apk
 ## Building from source
 
 Requires **JDK 17 or newer** and the **Android SDK** (platform 37, build-tools 37). Nothing
-else — no Android Studio needed.
+else is required: no Android Studio needed.
 
 ```bash
 export ANDROID_HOME="$HOME/Android/Sdk"     # wherever your SDK lives
