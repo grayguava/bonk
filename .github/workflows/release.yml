@@ -142,17 +142,17 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p release
-          cp app/build/outputs/apk/release/app-release.apk "release/${VERSION}_universal.apk"
+          cp app/build/outputs/apk/release/app-release.apk "release/v${VERSION}_universal.apk"
           cd release
-          sha256sum "${VERSION}_universal.apk" > "${VERSION}_universal.apk.sha256"
-          cat "${VERSION}_universal.apk.sha256"
+          sha256sum "v${VERSION}_universal.apk" > "v${VERSION}_universal.apk.sha256"
+          cat "v${VERSION}_universal.apk.sha256"
 
       - name: Verify the checksum
         run: |
           set -euo pipefail
           cd release
           version="${{ needs.preflight.outputs.version }}"
-          sha256sum -c "${version}_universal.apk.sha256"
+          sha256sum -c "v${version}_universal.apk.sha256"
 
       - uses: actions/upload-artifact@v4
         with:
@@ -184,7 +184,7 @@ jobs:
           set -euo pipefail
           cd artifacts
           version="${{ needs.preflight.outputs.version }}"
-          sha256sum -c "${version}_universal.apk.sha256"
+          sha256sum -c "v${version}_universal.apk.sha256"
 
       - name: Create draft release
         env:

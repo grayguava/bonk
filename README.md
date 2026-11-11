@@ -80,12 +80,12 @@ builds a signed APK, and leaves a draft release with the notes template filled i
 finish and publish. The release carries two files:
 
 ```
-0.1.0_universal.apk
-0.1.0_universal.apk.sha256
+v0.1.0_universal.apk
+v0.1.0_universal.apk.sha256
 ```
 
 The APK runs on every processor type. The `.sha256` file is the standard `sha256sum` line,
-so `sha256sum -c 0.1.0_universal.apk.sha256` checks it.
+so `sha256sum -c v0.1.0_universal.apk.sha256` checks it.
 
 The repository needs four secrets:
 
