@@ -59,11 +59,53 @@ Other useful tasks:
 ./gradlew test              # unit tests
 ```
 
+The debug build has its own application id, `com.grayguava.bonk.debug`, so it installs
+alongside a release build of the same app instead of replacing it. Two builds signed with
+different keys cannot upgrade one another, and this keeps that from biting.
+
 If you prefer a GUI, the project opens in Android Studio (Meerkat or newer) and in IntelliJ
 IDEA Community, which is considerably lighter.
 
 The app is built with AGP 9 (which compiles Kotlin itself), Kotlin 2.4, Jetpack Compose and
 Material 3. See [docs/architecture.md](docs/architecture.md) for how it all fits together.
+
+## Releases
+
+Nobody needs a signing key to work on the app. Debug builds are all you need locally, and the
+release build falls back to the debug key when no key is configured, so it still installs.
+
+A real release is signed in CI. The repository needs four secrets:
+
+| Secret | What it is |
+| --- | --- |
+| `BONK_KEYSTORE_BASE64` | the keystore file, base64 encoded |
+| `BONK_KEYSTORE_PASSWORD` | the keystore password |
+| `BONK_KEY_ALIAS` | the key alias |
+| `BONK_KEY_PASSWORD` | the key password |
+
+Generate the keystore once, with the JDK's `keytool`:
+
+```bash
+keytool -genkey -v -keystore bonk-release.jks -keyalg RSA -keysize 4096 -validity 10000 -alias bonk
+base64 -w0 bonk-release.jks > bonk-release.jks.b64
+```
+
+Push a `v*` tag and the release workflow builds a signed APK, checks the signature with
+`apksigner`, and publishes the APK with a `SHA256SUMS.txt`. If the secrets are missing the
+workflow fails rather than publishing a debug-signed build.
+
+To build a signed release yourself, point the build at the keystore:
+
+```bash
+export BONK_KEYSTORE="$PWD/bonk-release.jks"
+export BONK_KEYSTORE_PASSWORD=...
+export BONK_KEY_ALIAS=bonk
+export BONK_KEY_PASSWORD=...
+./gradlew :app:assembleRelease
+```
+
+Keep the keystore somewhere you control. If it is lost, a build signed with a new key cannot
+upgrade an installed copy of the app, so people have to uninstall it first and install again.
 
 ## Layout
 

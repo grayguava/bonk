@@ -3,6 +3,12 @@ plugins {
     alias(libs.plugins.compose.compiler)
 }
 
+// The release key comes from the environment when there is one. CI passes it in as a
+// secret; on a developer machine there is none, so a release build falls back to the
+// debug key and still installs. The release workflow checks the secrets before it
+// builds, so a missing key fails CI instead of publishing a debug-signed release.
+val releaseKeystore = System.getenv("BONK_KEYSTORE")?.let(::file)?.takeIf { it.exists() }
+
 android {
     namespace = "com.grayguava.bonk"
     compileSdk = 37
@@ -15,10 +21,32 @@ android {
         versionName = "0.1.0"
     }
 
+    signingConfigs {
+        if (releaseKeystore != null) {
+            create("release") {
+                storeFile = releaseKeystore
+                storePassword = System.getenv("BONK_KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("BONK_KEY_ALIAS")
+                keyPassword = System.getenv("BONK_KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
+        debug {
+            // Its own application id, so the debug build and the CI-signed release
+            // can sit on the same phone: two builds with different signatures cannot
+            // upgrade one another.
+            applicationIdSuffix = ".debug"
+        }
         release {
-            isMinifyEnabled = false
-            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro",
+            )
+            signingConfig = signingConfigs.findByName("release") ?: signingConfigs.getByName("debug")
         }
     }
 
