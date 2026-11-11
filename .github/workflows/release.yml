@@ -21,6 +21,9 @@ jobs:
 
       - uses: android-actions/setup-android@v3
 
+      # Caches the Gradle user home so the dependencies are not downloaded every run.
+      - uses: gradle/actions/setup-gradle@v4
+
       # The release is signed with the repository's key. If the secrets are gone the
       # build fails here, rather than quietly producing a debug-signed APK.
       - name: Require the signing secrets
@@ -51,12 +54,20 @@ jobs:
           BONK_KEYSTORE_PASSWORD: ${{ secrets.BONK_KEYSTORE_PASSWORD }}
           BONK_KEY_ALIAS: ${{ secrets.BONK_KEY_ALIAS }}
           BONK_KEY_PASSWORD: ${{ secrets.BONK_KEY_PASSWORD }}
-        run: ./gradlew :app:assembleRelease
+        # No configuration cache: the signing configuration is read from the
+        # environment, and a restored cache must never be able to serve a
+        # configuration that was built without the key.
+        run: ./gradlew :app:assembleRelease --no-configuration-cache
 
       - name: Verify the signature
         run: |
           apksigner="$(ls -d "$ANDROID_HOME"/build-tools/*/apksigner | tail -1)"
-          "$apksigner" verify --print-certs app/build/outputs/apk/release/app-release.apk
+          certs="$("$apksigner" verify --print-certs app/build/outputs/apk/release/app-release.apk)"
+          echo "$certs"
+          if echo "$certs" | grep -q "CN=Android Debug"; then
+            echo "::error::the release APK is signed with the debug key"
+            exit 1
+          fi
 
       - name: Checksums
         run: sha256sum app/build/outputs/apk/release/app-release.apk > SHA256SUMS.txt

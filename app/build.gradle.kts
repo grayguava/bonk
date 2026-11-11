@@ -7,7 +7,11 @@ plugins {
 // secret; on a developer machine there is none, so a release build falls back to the
 // debug key and still installs. The release workflow checks the secrets before it
 // builds, so a missing key fails CI instead of publishing a debug-signed release.
-val releaseKeystore = System.getenv("BONK_KEYSTORE")?.let(::file)?.takeIf { it.exists() }
+//
+// Read through providers, not System.getenv: the configuration cache then tracks the
+// values as inputs, so a build with a different environment is not served a stale
+// configuration.
+val releaseKeystore = providers.environmentVariable("BONK_KEYSTORE").orNull?.let(::file)?.takeIf { it.exists() }
 
 android {
     namespace = "com.grayguava.bonk"
@@ -25,9 +29,9 @@ android {
         if (releaseKeystore != null) {
             create("release") {
                 storeFile = releaseKeystore
-                storePassword = System.getenv("BONK_KEYSTORE_PASSWORD")
-                keyAlias = System.getenv("BONK_KEY_ALIAS")
-                keyPassword = System.getenv("BONK_KEY_PASSWORD")
+                storePassword = providers.environmentVariable("BONK_KEYSTORE_PASSWORD").orNull
+                keyAlias = providers.environmentVariable("BONK_KEY_ALIAS").orNull
+                keyPassword = providers.environmentVariable("BONK_KEY_PASSWORD").orNull
             }
         }
     }
