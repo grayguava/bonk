@@ -3,11 +3,13 @@ plugins {
     alias(libs.plugins.compose.compiler)
 }
 
-// The version lives in the `version` file at the root of the repository. One place to
-// bump, and the release workflow reads the same file to work out the tag.
+// The version lives in the `version` file at the root of the repository, which the
+// release workflow watches. It is not tracked yet, so a push does not start a release
+// by accident, and the build falls back to the version below until it is added back.
 val versionFile = rootProject.file("version")
-val appVersion = versionFile.takeIf { it.exists() }?.readText()?.trim()
-    ?: error("version file missing at ${versionFile.path}")
+val appVersion = versionFile.takeIf { it.exists() }
+    ?.readText()?.trim()?.takeIf { it.isNotEmpty() }
+    ?: "0.1.0"
 val versionParts = appVersion.split(".")
 require(versionParts.size == 3 && versionParts.all { it.toIntOrNull() != null }) {
     "version must contain three numeric parts, for example 0.2.0, but was $appVersion"

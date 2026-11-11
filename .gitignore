@@ -9,6 +9,11 @@ build/
 # Local machine config — the SDK path lives here
 local.properties
 
+# The release version. Not tracked yet: the release workflow watches this file, so
+# tracking it would start a release on every push that touches it. Add it back with
+# "git add -f version" when the first release is ready.
+version
+
 # Android
 *.apk
 *.aab
