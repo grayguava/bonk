@@ -76,8 +76,16 @@ release build falls back to the debug key when no key is configured, so it still
 
 The version lives in the `version` file at the root of the repository. Bump it and push to
 `main`: the release workflow reads that file, refuses to run if the tag already exists,
-builds a signed APK per processor type plus one that runs anywhere, and leaves a draft
-release with the notes template filled in for you to finish and publish.
+builds a signed APK, and leaves a draft release with the notes template filled in for you to
+finish and publish. The release carries two files:
+
+```
+0.1.0_universal.apk
+0.1.0_universal.apk.sha256
+```
+
+The APK runs on every processor type. The `.sha256` file is the standard `sha256sum` line,
+so `sha256sum -c 0.1.0_universal.apk.sha256` checks it.
 
 The repository needs four secrets:
 
@@ -95,8 +103,8 @@ keytool -genkey -v -keystore bonk-release.jks -keyalg RSA -keysize 4096 -validit
 base64 -w0 bonk-release.jks > bonk-release.jks.b64
 ```
 
-The workflow refuses to publish an APK signed with the debug key, and every asset ships with
-a `SHA256SUMS.txt` that the workflow verifies before anything is published.
+The workflow refuses to publish an APK signed with the debug key, and the checksum is
+verified twice, once before the artifact is uploaded and once after it is downloaded.
 
 To build a signed release yourself, point the build at the keystore:
 
@@ -107,8 +115,6 @@ export BONK_KEY_ALIAS=bonk
 export BONK_KEY_PASSWORD=...
 ./gradlew :app:assembleRelease
 ```
-
-Add `-PabiSplits=true` for one APK per processor type.
 
 Keep the keystore somewhere you control. If it is lost, a build signed with a new key cannot
 upgrade an installed copy of the app, so people have to uninstall it first and install again.

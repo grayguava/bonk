@@ -71,17 +71,6 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
-    // One APK per processor type, plus one that runs anywhere. Off by default so a
-    // local build is a single file; the release workflow turns it on.
-    splits {
-        abi {
-            isEnable = providers.gradleProperty("abiSplits").map { it.toBoolean() }.getOrElse(false)
-            reset()
-            include("arm64-v8a", "armeabi-v7a", "x86_64")
-            isUniversalApk = true
-        }
-    }
-
     buildFeatures {
         compose = true
     }

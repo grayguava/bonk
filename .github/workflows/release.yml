@@ -123,52 +123,41 @@ jobs:
         # No configuration cache: the signing configuration is read from the
         # environment, and a restored cache must never be able to serve a
         # configuration that was built without the key.
-        run: ./gradlew :app:assembleRelease -PabiSplits=true --no-configuration-cache
+        run: ./gradlew :app:assembleRelease --no-configuration-cache
 
       - name: Verify the signature
         run: |
           set -euo pipefail
           apksigner="$(ls -d "$ANDROID_HOME"/build-tools/*/apksigner | tail -1)"
-          for apk in app/build/outputs/apk/release/*.apk; do
-            certs="$("$apksigner" verify --print-certs "$apk")"
-            echo "$apk: $(echo "$certs" | grep 'certificate DN' | head -1)"
-            if echo "$certs" | grep -q "CN=Android Debug"; then
-              echo "::error::$apk is signed with the debug key"
-              exit 1
-            fi
-          done
+          certs="$("$apksigner" verify --print-certs app/build/outputs/apk/release/app-release.apk)"
+          echo "$certs"
+          if echo "$certs" | grep -q "CN=Android Debug"; then
+            echo "::error::the release APK is signed with the debug key"
+            exit 1
+          fi
 
-      - name: Checksums
+      - name: Collect the release assets
+        env:
+          VERSION: ${{ needs.preflight.outputs.version }}
         run: |
           set -euo pipefail
-          cd app/build/outputs/apk/release
-          sha256sum *.apk > SHA256SUMS.txt
-          cat SHA256SUMS.txt
+          mkdir -p release
+          cp app/build/outputs/apk/release/app-release.apk "release/${VERSION}_universal.apk"
+          cd release
+          sha256sum "${VERSION}_universal.apk" > "${VERSION}_universal.apk.sha256"
+          cat "${VERSION}_universal.apk.sha256"
 
-      - name: Verify the checksums
+      - name: Verify the checksum
         run: |
           set -euo pipefail
-          cd app/build/outputs/apk/release
-          for apk in *.apk; do
-            line="$(grep -F " $apk" SHA256SUMS.txt || true)"
-            if [ -z "$line" ]; then
-              echo "Checksum file does not reference $apk"
-              exit 1
-            fi
-            expected="${line%% *}"
-            actual="$(sha256sum "$apk" | cut -d' ' -f1)"
-            if [ "$expected" != "$actual" ]; then
-              echo "Checksum does not match $apk"
-              exit 1
-            fi
-          done
+          cd release
+          version="${{ needs.preflight.outputs.version }}"
+          sha256sum -c "${version}_universal.apk.sha256"
 
       - uses: actions/upload-artifact@v4
         with:
           name: bonk-${{ needs.preflight.outputs.version }}
-          path: |
-            app/build/outputs/apk/release/*.apk
-            app/build/outputs/apk/release/SHA256SUMS.txt
+          path: release/*
           if-no-files-found: error
 
       # The key never survives the runner.
@@ -190,23 +179,12 @@ jobs:
           name: bonk-${{ needs.preflight.outputs.version }}
           path: artifacts
 
-      - name: Verify the checksums
+      - name: Verify the checksum
         run: |
           set -euo pipefail
           cd artifacts
-          for apk in *.apk; do
-            line="$(grep -F " $apk" SHA256SUMS.txt || true)"
-            if [ -z "$line" ]; then
-              echo "Checksum file does not reference $apk"
-              exit 1
-            fi
-            expected="${line%% *}"
-            actual="$(sha256sum "$apk" | cut -d' ' -f1)"
-            if [ "$expected" != "$actual" ]; then
-              echo "Checksum does not match $apk"
-              exit 1
-            fi
-          done
+          version="${{ needs.preflight.outputs.version }}"
+          sha256sum -c "${version}_universal.apk.sha256"
 
       - name: Create draft release
         env:
@@ -216,6 +194,6 @@ jobs:
           set -euo pipefail
           notes="$(sed -e "s|<commit>|$GITHUB_SHA|g" -e "s|<tag>|$TAG|g" .github/RELEASE_TEMPLATE.md)"
           printf '%s\n' "$notes" > "$RUNNER_TEMP/release-notes.md"
-          gh release create "$TAG" artifacts/*.apk artifacts/SHA256SUMS.txt \
+          gh release create "$TAG" artifacts/*_universal.apk artifacts/*_universal.apk.sha256 \
             --draft --target "$GITHUB_SHA" --title "$TAG" \
             --notes-file "$RUNNER_TEMP/release-notes.md"
