@@ -28,6 +28,9 @@ release/
 *.keystore
 keystore.properties
 
+# Working notes from the anti-slop audits. Not part of the project.
+anti-slop/
+
 # IDEs
 .idea/
 *.iml
