@@ -82,6 +82,9 @@ v0.1.0_universal.apk.sha256
 Download the APK from the releases page and install it, or build it yourself with the commands
 above. `sha256sum -c v0.1.0_universal.apk.sha256` checks the download.
 
+The About page also checks github for a newer release when you ask it to, and offers to install
+it once you agree. That is the only thing the app ever sends over the network.
+
 Maintainers: [docs/releasing.md](docs/releasing.md) covers how a release is made.
 
 ## Layout

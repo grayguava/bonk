@@ -1,8 +1,9 @@
 # Architecture
 
 Bonk! is a single-module Compose app with no third-party dependencies beyond the AndroidX and
-Jetpack libraries. There is no DI framework, no database and no networking: the app is one
-screenful of state and a file of preferences.
+Jetpack libraries. There is no DI framework and no database: the app is one
+screenful of state and a file of preferences. The only network call is the one the update
+check makes, and only when you ask it to.
 
 ```
 com.grayguava.bonk
