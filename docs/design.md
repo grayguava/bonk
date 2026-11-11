@@ -13,6 +13,9 @@ The Material surfaces used on the About and History pages are **neutral greys**:
 `#141414` for cards, `#242424` for the tonal ones. Material's own `surfaceContainer*` roles
 carry a blue cast and read as a bluish near-black, which does not sit right here.
 
+The dialogs are `#0A0A0A` on a pure black page, which is very nearly nothing at all, so they
+carry a hairline of white at 12% around them. Without it they are a shape you half guess at.
+
 ## Glass, but only on the home screen
 
 The dock and the start/reset button are glass; every other page is Material 3. That split is
@@ -70,5 +73,12 @@ sliced by the circle, which read as a bug rather than a design.
 
 ## What is deliberately absent
 
-No confetti, no emoji, no sound, no streak sharing, no daily notifications, no mascot. A
-small app with a strong identity beats a bloated app trying too hard to be funny.
+No confetti, no sound, no streak sharing, no daily notifications, no mascot. A small app
+with a strong identity beats a bloated app trying too hard to be funny.
+
+The one emoji in the app is the party hat on the update popup, and it is there because a
+release is worth marking. It is the exception that proves the rule: nowhere else does the
+app put on a hat.
+
+The messages at the bottom of the About page stay for three seconds, a quarter less than
+Material's four, so a note is read and gone rather than lingering over the page.
