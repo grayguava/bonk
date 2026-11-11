@@ -6,9 +6,15 @@ plugins {
 // The version lives in the `version` file at the root of the repository, which the
 // release workflow watches. A push that changes it starts a release; the fallback
 // below is only for a build made without the file.
+//
+// A local build can take a version of its own, so an update can be tried without
+// touching the tracked file: BONK_VERSION=0.1.0 ./gradlew assembleRelease
 val versionFile = rootProject.file("version")
-val appVersion = versionFile.takeIf { it.exists() }
-    ?.readText()?.trim()?.takeIf { it.isNotEmpty() }
+val localVersion = (project.findProperty("bonkVersion") as String?)?.trim()
+    ?: providers.environmentVariable("BONK_VERSION").orNull?.trim()
+val appVersion = localVersion?.takeIf { it.isNotEmpty() }
+    ?: versionFile.takeIf { it.exists() }
+        ?.readText()?.trim()?.takeIf { it.isNotEmpty() }
     ?: "0.2.0"
 val versionParts = appVersion.split(".")
 require(versionParts.size == 3 && versionParts.all { it.toIntOrNull() != null }) {

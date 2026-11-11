@@ -65,11 +65,28 @@ The APK holds every processor type. The `.sha256` file is the standard `sha256su
 
 The debug build always reports version 0.1.0, whatever the version file says, so the update
 check always finds the newest published release. Install the debug build, open the about page
-and press *Check for updates*.
+and press *Check for updates*. The apk it downloads is the real signed release, and it
+installs beside the debug build rather than over it: the two have different application ids.
 
-The apk that comes down is the real signed release, and it installs beside the debug build
-rather than over it: the two have different application ids. Android asks before installing
-anything, and wants the "install unknown apps" permission for whichever app opens the file.
+To try an update that replaces the app in place, build a release with a version of your own
+and the release key:
+
+```bash
+export BONK_KEYSTORE="$PWD/bonk-release.jks"
+export BONK_KEYSTORE_PASSWORD=...
+export BONK_KEY_ALIAS=bonk
+export BONK_KEY_PASSWORD=...
+export BONK_VERSION=0.1.0
+./gradlew :app:assembleRelease
+```
+
+The `BONK_VERSION` variable keeps the tracked version file untouched, which matters: a push
+that changes that file starts a release. Uninstall the release app first, install the apk
+that comes out, and the update check will find the newest release on github and put it in
+place.
+
+Android asks before installing anything, and wants the "install unknown apps" permission for
+the app doing the installing.
 
 ## Building a signed release locally
 
