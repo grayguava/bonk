@@ -29,6 +29,15 @@ There is no backdrop blur, because there is nothing to blur. Every page behind t
 flat black. If the app ever puts artwork behind the glass, `dev.chrisbanes.haze` would give
 the real thing on Android 12+.
 
+## The pages
+
+Changing page fades the old one out over 150 ms while the new one fades in over 200 ms,
+and the new one slides a sixteenth of the width in the direction of travel. The two
+overlap, so a swipe reads as a move and never as a cut or a wait.
+
+The slide is the smallest that still reads. Any larger and the app starts to hurry; any
+smaller and the fade alone does the work, which is fine too.
+
 ## Type
 
 | Where | Style |

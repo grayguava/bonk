@@ -1,6 +1,12 @@
 package com.grayguava.bonk.ui
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -173,33 +179,46 @@ private fun BonkHome(name: String, onNameChanged: () -> Unit) {
                 .padding(padding)
                 .swipeToTab(tabCount = TABS.size, current = selectedTab) { selectedTab = it }
         ) {
-            when (selectedTab) {
-                0 -> HomeScreen(
-                    streakStart = streakStart,
-                    buttonLabel = buttonLabel,
-                    onStart = {
-                        val now = System.currentTimeMillis()
-                        store.currentStart = now
-                        streakStart = now
-                    },
-                    onReset = { reason ->
-                        val start = streakStart ?: return@HomeScreen
-                        val now = System.currentTimeMillis()
-                        store.add(
-                            StreakRecord(
-                                startTime = start,
-                                resetTime = now,
-                                days = streakDays(start, now),
-                                reason = reason.trim(),
+            AnimatedContent(
+                targetState = selectedTab,
+                transitionSpec = {
+                    // The page fades in while the old one fades out, and slides a
+                    // little in the direction of travel, so a swipe reads as a move
+                    // rather than a cut.
+                    val shift = if (targetState > initialState) 1 else -1
+                    (fadeIn(tween(200)) + slideInHorizontally(tween(240)) { it / 16 * shift })
+                        .togetherWith(fadeOut(tween(150)))
+                },
+                label = "pages",
+            ) { tab ->
+                when (tab) {
+                    0 -> HomeScreen(
+                        streakStart = streakStart,
+                        buttonLabel = buttonLabel,
+                        onStart = {
+                            val now = System.currentTimeMillis()
+                            store.currentStart = now
+                            streakStart = now
+                        },
+                        onReset = { reason ->
+                            val start = streakStart ?: return@HomeScreen
+                            val now = System.currentTimeMillis()
+                            store.add(
+                                StreakRecord(
+                                    startTime = start,
+                                    resetTime = now,
+                                    days = streakDays(start, now),
+                                    reason = reason.trim(),
+                                )
                             )
-                        )
-                        store.currentStart = null
-                        streakStart = null
-                        history = store.history()
-                    },
-                )
-                1 -> HistoryScreen(records = history)
-                else -> LevelsScreen(streakStart = streakStart)
+                            store.currentStart = null
+                            streakStart = null
+                            history = store.history()
+                        },
+                    )
+                    1 -> HistoryScreen(records = history)
+                    else -> LevelsScreen(streakStart = streakStart)
+                }
             }
         }
     }
