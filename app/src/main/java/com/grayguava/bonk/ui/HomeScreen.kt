@@ -35,6 +35,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.grayguava.bonk.data.easterEgg
+import com.grayguava.bonk.data.formatElapsed
 import com.grayguava.bonk.data.levelFor
 import com.grayguava.bonk.data.levelUnlockMessage
 import com.grayguava.bonk.data.milestoneMessage
@@ -116,7 +117,7 @@ fun HomeScreen(
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             LevelArt(
                 level = level.number,
-                size = 202.dp,
+                size = 212.dp,
                 modifier = Modifier.graphicsLayer {
                     scaleX = avatarPop.value
                     scaleY = avatarPop.value
@@ -147,12 +148,12 @@ fun HomeScreen(
             )
             Text(
                 text = if (isRunning) "days" else "no streak",
-                style = MaterialTheme.typography.labelLarge,
+                style = MaterialTheme.typography.titleMedium.copy(fontSize = 18.sp),
                 color = Color.White.copy(alpha = 0.55f),
             )
             Spacer(Modifier.height(20.dp))
             Text(
-                text = elapsed?.let { formatElapsed(it) } ?: "-- Hr. -- Min. -- Sec.",
+                text = elapsed?.let { formatElapsed(it.toMillis()) } ?: "-- Hr. -- Min. -- Sec.",
                 style = MaterialTheme.typography.titleMedium.copy(fontFeatureSettings = "tnum"),
                 color = Color.White.copy(alpha = 0.45f),
             )
@@ -278,10 +279,3 @@ internal fun rememberElapsedSince(start: Long?): Duration? {
 
 private fun timeSince(start: Long): Duration =
     Duration.between(Instant.ofEpochMilli(start), Instant.now())
-
-private fun formatElapsed(duration: Duration): String {
-    val total = duration.seconds.coerceAtLeast(0)
-    return "${plural((total / 3600).toInt(), "hour")} " +
-        "${plural(((total % 3600) / 60).toInt(), "min", "mins")} " +
-        plural((total % 60).toInt(), "sec", "secs")
-}

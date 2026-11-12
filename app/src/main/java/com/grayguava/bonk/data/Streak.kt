@@ -51,6 +51,20 @@ fun formatDurationFull(millis: Long): String {
 }
 
 /**
+ * The time of day a running streak has reached, the hours inside the day: "7 hours
+ * 29 mins 40 secs". The days are the big number above this, so they are not repeated
+ * here.
+ */
+fun formatElapsed(millis: Long): String {
+    val total = (millis / 1000).coerceAtLeast(0)
+    val hours = (total % 86_400) / 3600
+    val minutes = (total % 3600) / 60
+    val seconds = total % 60
+    return "${plural(hours.toInt(), "hour")} ${plural(minutes.toInt(), "min", "mins")} " +
+        plural(seconds.toInt(), "sec", "secs")
+}
+
+/**
  * Streak state on disk. SharedPreferences plus JSON keeps the app dependency-free;
  * swap in DataStore when the schema settles.
  */
