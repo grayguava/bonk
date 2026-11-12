@@ -88,7 +88,7 @@ private fun StreakCard(record: StreakRecord) {
     ) {
         Column(Modifier.padding(22.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                LevelArt(level = level.number, size = 38.dp)
+                LevelArt(level = level.number, size = 40.dp)
                 Spacer(Modifier.width(14.dp))
                 Column(Modifier.weight(1f)) {
                     Text(

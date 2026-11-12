@@ -130,7 +130,7 @@ private fun LevelRow(level: Level, reached: Boolean, current: Boolean) {
     ) {
         LevelArt(
             level = level.number,
-            size = 40.dp,
+            size = 42.dp,
             alpha = if (reached) 1f else 0.3f,
         )
         Spacer(Modifier.width(12.dp))

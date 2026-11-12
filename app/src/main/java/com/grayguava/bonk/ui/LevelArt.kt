@@ -21,9 +21,9 @@ import java.util.concurrent.ConcurrentHashMap
 /**
  * The artwork for a level: one character per level, in the assets.
  *
- * The files are 2048 px squares, so each one is decoded down to what it is drawn
- * at and no further. The pictures are kept, one per level and size, for as long
- * as the app runs.
+ * The files are webp squares, decoded down to what each one is drawn at and no
+ * further. The pictures are kept, one per level and size, for as long as the app
+ * runs.
  */
 @Composable
 fun LevelArt(
@@ -56,15 +56,15 @@ private object LevelArtCache {
     fun load(context: Context, level: Int, pixels: Int): ImageBitmap? {
         val key = level to pixels
         bitmaps[key]?.let { return it }
-        val bitmap = decode(context, "levels/$level.png", pixels) ?: return null
+        val bitmap = decode(context, "levels/$level.webp", pixels) ?: return null
         bitmaps[key] = bitmap
         return bitmap
     }
 
     /**
-     * Decode the picture at [pixels] across. The source is a 2048 px square, and
-     * the sample size has to be a power of two, so the picture lands on the next
-     * size down that still covers what it is drawn at.
+     * Decode the picture at [pixels] across. The sample size has to be a power of
+     * two, so the picture lands on the next size down that still covers what it is
+     * drawn at, and never larger than the source.
      */
     private fun decode(context: Context, path: String, pixels: Int): ImageBitmap? {
         val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }

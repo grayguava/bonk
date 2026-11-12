@@ -49,9 +49,11 @@ The level itself is still measured in whole days, which is what the tiers mean.
 Each level has a picture: one character per level, drawn for the app. The files are in
 `app/src/main/assets/levels/`, named after the level — `1.png` is level 1.
 
-They are 2048 px squares, which is far more than the app draws them at, so `ui/LevelArt.kt`
-decodes each one down to 384 px and keeps it, one per level, for as long as the app runs.
-Ten of them are about six megabytes.
+They are webp squares in `app/src/main/assets/levels/`, named after the level — `1.webp` is
+level 1. Ten of them are about two megabytes.
+
+`ui/LevelArt.kt` decodes each one to the size it is drawn at, and no further, and keeps it,
+one per level and size, for as long as the app runs.
 
 The art stands in for the tiers: the tiers have no picture of their own. A level's picture
 appears on the home screen, on its card in the history, and on its row in the Levels page,
