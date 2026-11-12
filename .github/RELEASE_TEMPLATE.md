@@ -25,4 +25,4 @@
 <commit>
 ```
 
-**Full Changelog**: https://github.com/grayguava/bonk/commits/<tag>
+**Full Changelog**: https://github.com/grayguava/bonk/compare/<previous>...<tag>

@@ -215,7 +215,12 @@ jobs:
           TAG: ${{ needs.preflight.outputs.tag }}
         run: |
           set -euo pipefail
-          notes="$(sed -e "s|<commit>|$GITHUB_SHA|g" -e "s|<tag>|$TAG|g" .github/RELEASE_TEMPLATE.md)"
+          # The release before this one, for the changelog link. The draft for this
+          # release does not exist yet, so the newest published one is the last.
+          previous="$(gh release list --limit 1 --json tagName --jq '.[0].tagName' || true)"
+          if [ -z "$previous" ]; then previous="$TAG"; fi
+          notes="$(sed -e "s|<commit>|$GITHUB_SHA|g" -e "s|<previous>|$previous|g" \
+            -e "s|<tag>|$TAG|g" .github/RELEASE_TEMPLATE.md)"
           printf '%s\n' "$notes" > "$RUNNER_TEMP/release-notes.md"
           gh release create "$TAG" artifacts/*_universal.apk artifacts/*_universal.apk.sha256 \
             --draft --target "$GITHUB_SHA" --title "$TAG" \
