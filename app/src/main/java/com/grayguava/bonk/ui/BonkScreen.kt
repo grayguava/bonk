@@ -177,14 +177,13 @@ private fun BonkHome(name: String, onNameChanged: () -> Unit) {
             Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .swipeToTab(tabCount = TABS.size, current = selectedTab) { selectedTab = it }
         ) {
             AnimatedContent(
                 targetState = selectedTab,
                 transitionSpec = {
                     // The page fades in while the old one fades out, and slides a
-                    // little in the direction of travel, so a swipe reads as a move
-                    // rather than a cut.
+                    // little in the direction of travel, so moving along the dock
+                    // reads as a move rather than a cut.
                     val shift = if (targetState > initialState) 1 else -1
                     (fadeIn(tween(200)) + slideInHorizontally(tween(240)) { it / 16 * shift })
                         .togetherWith(fadeOut(tween(150)))

@@ -33,10 +33,13 @@ the real thing on Android 12+.
 
 Changing page fades the old one out over 150 ms while the new one fades in over 200 ms,
 and the new one slides a sixteenth of the width in the direction of travel. The two
-overlap, so a swipe reads as a move and never as a cut or a wait.
+overlap, so moving along the dock reads as a move and never as a cut or a wait.
 
 The slide is the smallest that still reads. Any larger and the app starts to hurry; any
 smaller and the fade alone does the work, which is fine too.
+
+The pages are reached from the dock only. A swipe does not change page: the app has three
+of them and a wrong swipe on a list is worse than no swipe at all.
 
 ## Type
 
@@ -58,13 +61,13 @@ The header is the same height on every page, and every screen leaves the same ga
 One dry sentence at the right moment, in `data/Personality.kt`:
 
 - **Milestones**: "A whole week. Look at you go."
-- **Level unlocks**: "Disciplined. The hard part starts now."
+- **Level unlocks**: "Monk in Training. The hard part starts now."
 - **After a reset**: "That was quick. Back to square one."
 - **Empty history**: "Nothing to report. Yet."
 
 The line sits under the button, holds for four seconds, then fades. Two tiny beats go with it:
-the tier avatar springs when the level changes, the counter squashes when a milestone lands.
-Neither loops, and neither ever takes over the screen.
+the level's character springs when the level changes, the counter squashes when a milestone
+lands. Neither loops, and neither ever takes over the screen.
 
 Easter eggs exist for the days that earn one (42, 666, 1000) and are silent otherwise.
 
