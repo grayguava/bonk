@@ -14,7 +14,7 @@ com.grayguava.bonk
 │   ├── HistoryScreen.kt finished streaks
 │   ├── LevelsScreen.kt  the tiers, the level art and the level progress
 │   ├── LevelArt.kt      the picture for a level, decoded from the assets
-│   ├── AboutScreen.kt   the settings page: details, backups and the update check
+│   ├── SettingsScreen.kt the settings page: details, backups and the update check
 │   ├── WelcomeScreen.kt asks for your name on a fresh install
 │   ├── BottomDock.kt    the glass tab bar
 │   ├── Glass.kt         the glass material: panels, buttons, icon buttons

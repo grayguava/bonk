@@ -9,7 +9,7 @@ just to justify the name.
 The app is black. `background` and `surface` are `#000000`, the theme is a single dark
 scheme, and the window background is black too so there is no flash on launch.
 
-The Material surfaces used on the About and History pages are **neutral greys**:
+The Material surfaces used on the settings and History pages are **neutral greys**:
 `#141414` for cards, `#242424` for the tonal ones. Material's own `surfaceContainer*` roles
 carry a blue cast and read as a bluish near-black, which does not sit right here.
 

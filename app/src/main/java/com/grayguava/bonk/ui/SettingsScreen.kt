@@ -132,7 +132,7 @@ private fun formatSize(bytes: Long): String = when {
 
 /** The page behind the "i" button: what this app is, and where to find it. */
 @Composable
-fun AboutScreen(
+fun SettingsScreen(
     onBack: () -> Unit,
     streakStore: StreakStore,
     userStore: UserStore,
@@ -346,7 +346,7 @@ fun AboutScreen(
             )
             Spacer(Modifier.height(8.dp))
             Text(
-                text = "A streak counter that greets you by name.",
+                text = "A streak counter for whatever you are not doing.",
                 style = MaterialTheme.typography.bodyLarge.copy(fontSize = taglineSize),
                 color = Color.White.copy(alpha = 0.55f),
             )

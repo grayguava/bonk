@@ -87,7 +87,7 @@ private fun BonkHome(name: String, onNameChanged: () -> Unit) {
     var selectedTab by remember { mutableIntStateOf(0) }
     var streakStart by remember { mutableStateOf(store.currentStart) }
     var history by remember { mutableStateOf(store.history()) }
-    var showAbout by remember { mutableStateOf(false) }
+    var showSettings by remember { mutableStateOf(false) }
     val greeting = rememberGreeting()
 
     val buttonLabel = when {
@@ -96,12 +96,12 @@ private fun BonkHome(name: String, onNameChanged: () -> Unit) {
         else -> "Restart streak"
     }
 
-    // The phone's own back button has to leave the About page too, not exit the app.
-    BackHandler(enabled = showAbout) { showAbout = false }
+    // The phone's own back button has to leave the settings page too, not exit the app.
+    BackHandler(enabled = showSettings) { showSettings = false }
 
-    if (showAbout) {
-        AboutScreen(
-            onBack = { showAbout = false },
+    if (showSettings) {
+        SettingsScreen(
+            onBack = { showSettings = false },
             streakStore = store,
             userStore = userStore,
             onRestore = {
@@ -148,7 +148,7 @@ private fun BonkHome(name: String, onNameChanged: () -> Unit) {
                         )
                     }
                 }
-                IconButton(onClick = { showAbout = true }) {
+                IconButton(onClick = { showSettings = true }) {
                     Icon(
                         imageVector = Icons.Outlined.Settings,
                         contentDescription = "Settings",
