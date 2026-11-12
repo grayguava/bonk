@@ -113,7 +113,8 @@ killed by a successful install, so the app is opened again by hand afterwards.
 ## The dock
 
 `BottomDock.kt` is a port of the tab bar from
-[OpenTune](https://github.com/justshivv/Opentune) (MIT-licensed, used as a reference).
+[OpenTune](https://github.com/justshivv/Opentune) (GPL-3.0, the same licence as this app,
+used as a reference).
 The interesting part is the **lens**: the indicator is a box whose two edges travel
 separately: the leading edge springs out ahead and the trailing edge catches up late, so
 the lens stretches toward the new tab and wobbles home.

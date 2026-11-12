@@ -5,6 +5,20 @@
 Bonk! is a small, deliberately quiet Android app for one job: keeping a streak alive. It shows
 a number (how many whole days your current streak has run) and gets out of the way.
 
+It is a simple abstinence tracker: a lightweight, quiet alternative to the
+[NoFap App](https://play.google.com/store/apps/details?id=com.TasnimAnas.NoFap). No account,
+no ads, no subscription, and nothing leaves the phone unless you ask it to.
+
+## See it
+
+<table>
+  <tr>
+    <td><img src="docs/screenshots/01-home.jpg" alt="The home screen: the streak, the level's character and the dock"></td>
+    <td><img src="docs/screenshots/02-levels.jpg" alt="The levels, each with its own character"></td>
+    <td><img src="docs/screenshots/03-settings.jpg" alt="The About page: the app's details, a backup and the update check"></td>
+  </tr>
+</table>
+
 ## What it does
 
 - **A streak that runs on a timer.** Press *Start streak* and the clock begins; the counter is
@@ -100,7 +114,7 @@ app/src/main/java/com/grayguava/bonk/
   ui/          the screens, the dock, the glass material
   data/        streaks, levels, the name, backups, updates, and the app's voice
   ui/theme/    colour scheme and shapes
-docs/          architecture, tiers, design notes
+docs/          architecture, tiers, design notes, screenshots
 ```
 
 ## Contributing
@@ -111,7 +125,8 @@ for the rules the app follows.
 
 ## License
 
-**GPL-3.0.** The full text is in the `LICENSE` file at the root of this repository.
+**GPL-3.0.** See [LICENSE](LICENSE).
 
 The tab bar in `ui/BottomDock.kt` is derived from
-[OpenTune](https://github.com/justshivv/Opentune) (MIT), which is compatible with the GPL.
+[OpenTune](https://github.com/justshivv/Opentune), by the OpenTune contributors, under
+GPL-3.0, the same licence as this app.
