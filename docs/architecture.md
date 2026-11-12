@@ -12,13 +12,13 @@ com.grayguava.bonk
 │   ├── BonkScreen.kt    the shell: header, dock, tab dispatch
 │   ├── HomeScreen.kt    the streak counter and the start/reset button
 │   ├── HistoryScreen.kt finished streaks
-│   ├── LevelsScreen.kt  the tiers, their badges and the level progress
+│   ├── LevelsScreen.kt  the tiers, the level art and the level progress
+│   ├── LevelArt.kt      the picture for a level, decoded from the assets
 │   ├── AboutScreen.kt   app details, backups and the update check
 │   ├── WelcomeScreen.kt asks for your name on a fresh install
 │   ├── BottomDock.kt    the glass tab bar
 │   ├── Glass.kt         the glass material: panels, buttons, icon buttons
 │   ├── Layout.kt        screenTopGap()
-│   ├── Swipe.kt         swipe between tabs
 │   └── theme/Theme.kt   the colour scheme
 └── data/
     ├── Streak.kt         streak records, storage, duration formatting

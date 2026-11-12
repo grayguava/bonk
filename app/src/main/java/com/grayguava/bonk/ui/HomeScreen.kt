@@ -1,8 +1,9 @@
 package com.grayguava.bonk.ui
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -11,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
@@ -25,6 +27,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
@@ -61,6 +64,7 @@ fun HomeScreen(
 
     // The app's voice: one line at a time, under the button, then gone.
     var note by remember { mutableStateOf<String?>(null) }
+    var noteOn by remember { mutableStateOf(false) }
     val avatarPop = remember { Animatable(1f) }
     val counterPop = remember { Animatable(1f) }
     var lastDays by remember { mutableIntStateOf(days) }
@@ -89,6 +93,7 @@ fun HomeScreen(
             levelChanged -> levelUnlockMessage(level)
             else -> easterEgg(days)
         }
+        noteOn = note != null
 
         lastDays = days
         lastLevel = level.number
@@ -97,14 +102,21 @@ fun HomeScreen(
     LaunchedEffect(note) {
         if (note != null) {
             delay(4_000)
-            note = null
+            noteOn = false
         }
     }
 
+    val noteAlpha by animateFloatAsState(
+        targetValue = if (noteOn) 1f else 0f,
+        animationSpec = tween(220),
+        label = "note",
+    )
+
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            TierAvatar(
-                tier = level.tier,
+            LevelArt(
+                level = level.number,
+                size = 202.dp,
                 modifier = Modifier.graphicsLayer {
                     scaleX = avatarPop.value
                     scaleY = avatarPop.value
@@ -160,13 +172,21 @@ fun HomeScreen(
                 }
             }
             Spacer(Modifier.height(18.dp))
-            AnimatedVisibility(visible = note != null) {
+            // The note is drawn in the space below the button rather than under it,
+            // so that showing it never moves the block. The block is centred, and a
+            // line that came and went under the button shifted everything above it.
+            Box(
+                modifier = Modifier.fillMaxWidth().height(0.dp),
+                contentAlignment = Alignment.TopCenter,
+            ) {
                 Text(
                     text = note.orEmpty(),
                     style = MaterialTheme.typography.bodyMedium,
                     color = Color.White.copy(alpha = 0.6f),
                     textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(horizontal = 32.dp),
+                    modifier = Modifier
+                        .padding(horizontal = 32.dp)
+                        .alpha(noteAlpha),
                 )
             }
         }

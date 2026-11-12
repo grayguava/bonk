@@ -1,12 +1,12 @@
 package com.grayguava.bonk.data
 
-/** The five tiers, each with its badge colour. */
+/** The five tiers, each with its colour. */
 enum class Tier(val title: String, val color: Long) {
-    I("Awakening", 0xFF8A8F98),
-    II("Building", 0xFF7FA0C4),
-    III("Strength", 0xFF8FB9A0),
-    IV("Mastery", 0xFFC9AE7E),
-    V("Transcendence", 0xFFE8D08A),
+    I("The Struggle", 0xFF8A8F98),
+    II("Getting Serious", 0xFF7FA0C4),
+    III("Built Different", 0xFF8FB9A0),
+    IV("Questionably Powerful", 0xFFC9AE7E),
+    V("Final Form", 0xFFE8D08A),
 }
 
 data class Level(
@@ -18,16 +18,16 @@ data class Level(
 
 /** Ten levels, in order. The days are how long a streak must last to reach them. */
 val LEVELS = listOf(
-    Level(1, "Fresh Start", 0, Tier.I),
-    Level(2, "Beginner", 1, Tier.I),
-    Level(3, "Initiate", 3, Tier.I),
-    Level(4, "Week One", 7, Tier.II),
-    Level(5, "Disciplined", 14, Tier.II),
-    Level(6, "Consistent", 30, Tier.III),
-    Level(7, "Resilient", 60, Tier.III),
-    Level(8, "Dedicated", 90, Tier.IV),
-    Level(9, "Unshaken", 180, Tier.IV),
-    Level(10, "Year One", 365, Tier.V),
+    Level(1, "Fresh Spawn", 0, Tier.I),
+    Level(2, "Still Standing", 1, Tier.I),
+    Level(3, "The Determined", 3, Tier.I),
+    Level(4, "Week Warrior", 7, Tier.II),
+    Level(5, "Monk in Training", 14, Tier.II),
+    Level(6, "Certified Monk", 30, Tier.III),
+    Level(7, "Bonk Resistant", 60, Tier.III),
+    Level(8, "Grass Toucher", 90, Tier.IV),
+    Level(9, "Beyond Human", 180, Tier.IV),
+    Level(10, "The Bonkening", 365, Tier.V),
 )
 
 /** The tiers in order, each with the levels inside it. */

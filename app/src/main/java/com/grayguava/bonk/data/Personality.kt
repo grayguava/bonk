@@ -21,16 +21,16 @@ fun milestoneMessage(days: Int): String? = when (days) {
 
 /** A new level, and what it says about you. */
 fun levelUnlockMessage(level: Level): String = when (level.number) {
-    1 -> "Fresh Start. Obviously."
-    2 -> "Beginner. Yesterday you were that too."
-    3 -> "Initiate. Initiated."
-    4 -> "Week One. You have done this before."
-    5 -> "Disciplined. The hard part starts now."
-    6 -> "Consistent. Suspiciously consistent."
-    7 -> "Resilient. Bounced back, apparently."
-    8 -> "Dedicated. This is no longer a phase."
-    9 -> "Unshaken. Nothing moved you."
-    else -> "Year One. A full orbit."
+    1 -> "Fresh Spawn. Obviously."
+    2 -> "Still Standing. Yesterday you were that too."
+    3 -> "The Determined. Determined to do what, though."
+    4 -> "Week Warrior. You have done this before."
+    5 -> "Monk in Training. The hard part starts now."
+    6 -> "Certified Monk. Suspiciously certified."
+    7 -> "Bonk Resistant. Bounced back, apparently."
+    8 -> "Grass Toucher. The lawn misses you."
+    9 -> "Beyond Human. Nothing moved you."
+    else -> "The Bonkening. A full orbit."
 }
 
 /** After a bonk. Never a lecture, never a scolding. */

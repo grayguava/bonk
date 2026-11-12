@@ -4,16 +4,16 @@ Ten levels, five tiers, two levels per tier except the first (which has three).
 
 | Tier | Level | Name | Days |
 | --- | --- | --- | --- |
-| **I · Awakening** | 1 | Fresh Start | 0 |
-| | 2 | Beginner | 1 |
-| | 3 | Initiate | 3 |
-| **II · Building** | 4 | Week One | 7 |
-| | 5 | Disciplined | 14 |
-| **III · Strength** | 6 | Consistent | 30 |
-| | 7 | Resilient | 60 |
-| **IV · Mastery** | 8 | Dedicated | 90 |
-| | 9 | Unshaken | 180 |
-| **V · Transcendence** | 10 | Year One | 365 |
+| **I · The Struggle** | 1 | Fresh Spawn | 0 |
+| | 2 | Still Standing | 1 |
+| | 3 | The Determined | 3 |
+| **II · Getting Serious** | 4 | Week Warrior | 7 |
+| | 5 | Monk in Training | 14 |
+| **III · Built Different** | 6 | Certified Monk | 30 |
+| | 7 | Bonk Resistant | 60 |
+| **IV · Questionably Powerful** | 8 | Grass Toucher | 90 |
+| | 9 | Beyond Human | 180 |
+| **V · Final Form** | 10 | The Bonkening | 365 |
 
 ## The model
 
@@ -31,8 +31,7 @@ be overridden.
 - `nextLevel(after)` returns the one after it, or null at the top.
 - `levelsIn(tier)` returns the levels inside a tier.
 
-The tier grouping follows the original table literally: level 3 (Initiate) had an empty tier
-cell in the source table, so it continues Tier I. That gives the tiers 3/2/2/2/1 levels.
+The tiers hold 3/2/2/2/1 levels.
 
 ## The progress bar
 
@@ -45,28 +44,26 @@ progress = (elapsedDays - currentLevel.days) / (nextLevel.days - currentLevel.da
 
 The level itself is still measured in whole days, which is what the tiers mean.
 
-## The badges
+## The art
 
-Each tier has its own mark, drawn as a vector path in `LevelsScreen.kt` rather than shipped
-as an icon. The marks are:
+Each level has a picture: one character per level, drawn for the app. The files are in
+`app/src/main/assets/levels/`, named after the level — `1.png` is level 1.
 
-| Tier | Mark |
-| --- | --- |
-| Awakening | a sapling: a stem and two leaves |
-| Building | three blocks, each taller than the last |
-| Strength | a mountain |
-| Mastery | a cut gem |
-| Transcendence | an eight-point star |
+They are 2048 px squares, which is far more than the app draws them at, so `ui/LevelArt.kt`
+decodes each one down to 384 px and keeps it, one per level, for as long as the app runs.
+Ten of them are about six megabytes.
 
-They are drawn in the tier's colour, dimmed to 28% alpha when the tier has not been
-reached. The colours run from dim to bright as you climb:
+The art stands in for the tiers: the tiers have no picture of their own. A level's picture
+appears on the home screen, on its card in the history, and on its row in the Levels page,
+where it is dimmed to 30% until the level is reached.
+
+The tier colours are still used, for the progress bar. They run from dim to bright as you
+climb:
 
 | Tier | Colour |
 | --- | --- |
-| Awakening | `#8A8F98` grey |
-| Building | `#7FA0C4` steel |
-| Strength | `#8FB9A0` sage |
-| Mastery | `#C9AE7E` bronze |
-| Transcendence | `#E8D08A` gold |
-
-The same marks appear larger in the tier avatar on the home screen, inside a thin round ring.
+| The Struggle | `#8A8F98` grey |
+| Getting Serious | `#7FA0C4` steel |
+| Built Different | `#8FB9A0` sage |
+| Questionably Powerful | `#C9AE7E` bronze |
+| Final Form | `#E8D08A` gold |

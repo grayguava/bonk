@@ -10,9 +10,9 @@ a number (how many whole days your current streak has run) and gets out of the w
 - **A streak that runs on a timer.** Press *Start streak* and the clock begins; the counter is
   the number of whole days elapsed. Press *Reset streak* when it ends, and you have to say why.
   The reason is required, so the history means something later.
-- **Ten levels in five tiers.** *Awakening → Building → Strength → Mastery → Transcendence*,
-  each with its own badge. The Levels tab tracks how far through the current level you are,
-  to the second.
+- **Ten levels in five tiers.** *The Struggle → Getting Serious → Built Different →
+  Questionably Powerful → Final Form*, each level with its own character. The Levels tab
+  tracks how far through the current level you are, to the second.
 - **A history that remembers.** Every finished streak is a card: how long it lasted and why it
   ended. Tap it to see when it started and when it was reset.
 - **A greeting that knows the time.** "Good morning," / "Late night," over your name, on the
@@ -28,13 +28,13 @@ a number (how many whole days your current streak has run) and gets out of the w
 
 | Tier | Levels |
 | --- | --- |
-| I · Awakening | 1 Fresh Start (0 days) · 2 Beginner (1) · 3 Initiate (3) |
-| II · Building | 4 Week One (7) · 5 Disciplined (14) |
-| III · Strength | 6 Consistent (30) · 7 Resilient (60) |
-| IV · Mastery | 8 Dedicated (90) · 9 Unshaken (180) |
-| V · Transcendence | 10 Year One (365) |
+| I · The Struggle | 1 Fresh Spawn (0 days) · 2 Still Standing (1) · 3 The Determined (3) |
+| II · Getting Serious | 4 Week Warrior (7) · 5 Monk in Training (14) |
+| III · Built Different | 6 Certified Monk (30) · 7 Bonk Resistant (60) |
+| IV · Questionably Powerful | 8 Grass Toucher (90) · 9 Beyond Human (180) |
+| V · Final Form | 10 The Bonkening (365) |
 
-Full detail, including how each badge is drawn: [docs/tiers.md](docs/tiers.md).
+Each level has a character of its own. Full detail: [docs/tiers.md](docs/tiers.md).
 
 ## Installing
 
