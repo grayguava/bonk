@@ -92,5 +92,5 @@ The one emoji in the app is the party hat on the update popup, and it is there b
 release is worth marking. It is the exception that proves the rule: nowhere else does the
 app put on a hat.
 
-The messages at the bottom of the About page stay for three seconds, a quarter less than
+The messages at the bottom of the settings page stay for three seconds, a quarter less than
 Material's four, so a note is read and gone rather than lingering over the page.

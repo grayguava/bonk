@@ -15,7 +15,7 @@ no ads, no subscription, and nothing leaves the phone unless you ask it to.
   <tr>
     <td><img src="docs/screenshots/01-home.jpg" alt="The home screen: the streak, the level's character and the dock"></td>
     <td><img src="docs/screenshots/02-levels.jpg" alt="The levels, each with its own character"></td>
-    <td><img src="docs/screenshots/03-settings.jpg" alt="The About page: the app's details, a backup and the update check"></td>
+    <td><img src="docs/screenshots/03-settings.jpg" alt="The settings page: the app's details, a backup and the update check"></td>
   </tr>
 </table>
 
@@ -31,12 +31,13 @@ no ads, no subscription, and nothing leaves the phone unless you ask it to.
   ended. Tap it to see when it started and when it was reset.
 - **A greeting that knows the time.** "Good morning," / "Late night," over your name, on the
   home screen only. Every other page names itself.
-- **A backup you can carry.** The About page writes your name and every streak to a file you
-  pick, and reads one back on another device.
-- **An About page** with the app details, the device it is running on, and a link to the repo.
-- **A check for updates.** The About page asks github for the newest release and downloads it
-  only when you say yes. The download is checked against the checksum the release published
-  before android is asked to install it.
+- **A backup you can carry.** The settings page writes your name and every streak to a file
+  you pick, and reads one back on another device.
+- **A settings page**, behind the gear in the header, with the app details, the device it is
+  running on, and a link to the repo.
+- **A check for updates.** The settings page asks github for the newest release and
+  downloads it only when you say yes. The download is checked against the checksum the
+  release published before android is asked to install it.
 
 ## The tiers
 
@@ -101,7 +102,7 @@ v0.2.1_universal.apk.sha256
 Download the APK from the releases page and install it, or build it yourself with the commands
 above. `sha256sum -c v0.2.1_universal.apk.sha256` checks the download.
 
-The About page also checks github for a newer release when you ask it to, and offers to install
+The settings page also checks github for a newer release when you ask it to, and offers to install
 it once you agree. That is the only thing the app ever sends over the network.
 
 Maintainers: [docs/releasing.md](docs/releasing.md) covers how a release is made.

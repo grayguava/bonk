@@ -14,7 +14,7 @@ com.grayguava.bonk
 │   ├── HistoryScreen.kt finished streaks
 │   ├── LevelsScreen.kt  the tiers, the level art and the level progress
 │   ├── LevelArt.kt      the picture for a level, decoded from the assets
-│   ├── AboutScreen.kt   app details, backups and the update check
+│   ├── AboutScreen.kt   the settings page: details, backups and the update check
 │   ├── WelcomeScreen.kt asks for your name on a fresh install
 │   ├── BottomDock.kt    the glass tab bar
 │   ├── Glass.kt         the glass material: panels, buttons, icon buttons
@@ -61,7 +61,7 @@ when (selectedTab) {
 }
 ```
 
-The About page is not a tab. It is a boolean that replaces the whole scaffold, with a
+The settings page is not a tab. It is a boolean that replaces the whole scaffold, with a
 `BackHandler` so the system back button returns instead of exiting.
 
 ## The streak model
@@ -89,7 +89,7 @@ permission and cannot see the rest of the phone.
 
 ## Updates
 
-The About page asks github for the newest published release, compares its version with the
+The settings page asks github for the newest published release, compares its version with the
 one you are running, and says whether there is anything new. Nothing is downloaded until you
 agree to it.
 

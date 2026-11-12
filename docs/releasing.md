@@ -64,7 +64,7 @@ The APK holds every processor type. The `.sha256` file is the standard `sha256su
 ## Trying an update
 
 The debug build always reports version 0.1.0, whatever the version file says, so the update
-check always finds the newest published release. Install the debug build, open the about page
+check always finds the newest published release. Install the debug build, open the settings page
 and press *Check for updates*. The apk it downloads is the real signed release, and it
 installs beside the debug build rather than over it: the two have different application ids.
 
