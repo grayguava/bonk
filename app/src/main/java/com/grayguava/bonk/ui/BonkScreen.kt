@@ -17,8 +17,10 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.DateRange
 import androidx.compose.material.icons.outlined.Home
-import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.Star
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -140,11 +142,13 @@ private fun BonkHome(name: String, onNameChanged: () -> Unit) {
                         )
                     }
                 }
-                GlassIconButton(
-                    icon = Icons.Outlined.Info,
-                    contentDescription = "About Bonk!",
-                    onClick = { showAbout = true },
-                )
+                IconButton(onClick = { showAbout = true }) {
+                    Icon(
+                        imageVector = Icons.Outlined.Settings,
+                        contentDescription = "Settings",
+                        tint = Color.White.copy(alpha = 0.85f),
+                    )
+                }
             }
         },
         bottomBar = {
