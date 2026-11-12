@@ -1,6 +1,6 @@
 # Bonk!
 
-**A streak counter that greets you by name.**
+**A streak counter for whatever you are not doing.**
 
 Bonk! is a small, deliberately quiet Android app for one job: keeping a streak alive. It shows
 a number (how many whole days your current streak has run) and gets out of the way.
