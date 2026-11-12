@@ -95,12 +95,12 @@ Each release is one signed APK that runs on any Android device from 8.0 up, with
 checksum beside it:
 
 ```
-v0.2.1_universal.apk
-v0.2.1_universal.apk.sha256
+v<version>_universal.apk
+v<version>_universal.apk.sha256
 ```
 
 Download the APK from the releases page and install it, or build it yourself with the commands
-above. `sha256sum -c v0.2.1_universal.apk.sha256` checks the download.
+above. `sha256sum -c v<version>_universal.apk.sha256` checks the download.
 
 The settings page also checks github for a newer release when you ask it to, and offers to install
 it once you agree. That is the only thing the app ever sends over the network.
