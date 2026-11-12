@@ -64,12 +64,14 @@ fun BonkScreen() {
             }
         )
     } else {
-        BonkHome(name = name)
+        // A restore can bring a name with it, or take the one here away, so the
+        // greeting has to be told that the name changed.
+        BonkHome(name = name, onNameChanged = { storedName = userStore.name })
     }
 }
 
 @Composable
-private fun BonkHome(name: String) {
+private fun BonkHome(name: String, onNameChanged: () -> Unit) {
     val context = LocalContext.current
     val store = remember { StreakStore(context) }
     val userStore = remember { UserStore(context) }
@@ -97,6 +99,7 @@ private fun BonkHome(name: String) {
             onRestore = {
                 streakStart = store.currentStart
                 history = store.history()
+                onNameChanged()
             },
         )
         return
