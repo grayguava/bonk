@@ -31,12 +31,13 @@ the real thing on Android 12+.
 
 ## The pages
 
-Changing page fades the old one out over 150 ms while the new one fades in over 200 ms,
-and the new one slides a sixteenth of the width in the direction of travel. The two
-overlap, so a swipe reads as a move and never as a cut or a wait.
+Changing page pushes, the way OpenTune does it: the new page comes in the whole width
+while the old one edges away by a quarter, both on one critically damped spring, so
+neither of them bounces. The way you came decides which way the page comes in, so a
+swipe left and a swipe right do not feel the same.
 
-The slide is the smallest that still reads. Any larger and the app starts to hurry; any
-smaller and the fade alone does the work, which is fine too.
+The pages are opaque, so the one coming in covers the one leaving instead of showing
+through it.
 
 ## Type
 

@@ -113,5 +113,6 @@ for the rules the app follows.
 
 **GPL-3.0.** The full text is in the `LICENSE` file at the root of this repository.
 
-The tab bar in `ui/BottomDock.kt` is derived from
-[OpenTune](https://github.com/justshivv/Opentune) (MIT), which is compatible with the GPL.
+The tab bar in `ui/BottomDock.kt` and the push between pages in `ui/BonkScreen.kt` are
+derived from [OpenTune](https://github.com/justshivv/Opentune) (MIT), which is compatible
+with the GPL.

@@ -2,11 +2,15 @@ package com.grayguava.bonk.ui
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.VisibilityThreshold
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -42,6 +46,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.grayguava.bonk.data.StreakRecord
@@ -55,6 +60,17 @@ private val TABS = listOf(
     DockTab("Home", Icons.Outlined.Home, Icons.Filled.Home),
     DockTab("History", Icons.Outlined.DateRange, Icons.Filled.DateRange),
     DockTab("Levels", Icons.Outlined.Star, Icons.Filled.Star),
+)
+
+/**
+ * The push between pages, as OpenTune does it: the new page comes in the whole
+ * width while the old one edges away by a quarter, both on the same critically
+ * damped spring, so neither of them bounces.
+ */
+private val PageSpring = spring(
+    dampingRatio = 1f,
+    stiffness = 520f,
+    visibilityThreshold = IntOffset.VisibilityThreshold,
 )
 
 @Composable
@@ -182,42 +198,46 @@ private fun BonkHome(name: String, onNameChanged: () -> Unit) {
             AnimatedContent(
                 targetState = selectedTab,
                 transitionSpec = {
-                    // The page fades in while the old one fades out, and slides a
-                    // little in the direction of travel, so a swipe reads as a move
-                    // rather than a cut.
+                    // The way you came decides which way the page comes in.
                     val shift = if (targetState > initialState) 1 else -1
-                    (fadeIn(tween(200)) + slideInHorizontally(tween(240)) { it / 16 * shift })
-                        .togetherWith(fadeOut(tween(150)))
+                    (slideInHorizontally(PageSpring) { it * shift } + fadeIn(tween(120)))
+                        .togetherWith(
+                            slideOutHorizontally(PageSpring) { -it / 4 * shift } +
+                                fadeOut(tween(260))
+                        )
                 },
                 label = "pages",
             ) { tab ->
-                when (tab) {
-                    0 -> HomeScreen(
-                        streakStart = streakStart,
-                        buttonLabel = buttonLabel,
-                        onStart = {
-                            val now = System.currentTimeMillis()
-                            store.currentStart = now
-                            streakStart = now
-                        },
-                        onReset = { reason ->
-                            val start = streakStart ?: return@HomeScreen
-                            val now = System.currentTimeMillis()
-                            store.add(
-                                StreakRecord(
-                                    startTime = start,
-                                    resetTime = now,
-                                    days = streakDays(start, now),
-                                    reason = reason.trim(),
+                // The pages are opaque, so the one coming in covers the one leaving.
+                Box(Modifier.fillMaxSize().background(Color.Black)) {
+                    when (tab) {
+                        0 -> HomeScreen(
+                            streakStart = streakStart,
+                            buttonLabel = buttonLabel,
+                            onStart = {
+                                val now = System.currentTimeMillis()
+                                store.currentStart = now
+                                streakStart = now
+                            },
+                            onReset = { reason ->
+                                val start = streakStart ?: return@HomeScreen
+                                val now = System.currentTimeMillis()
+                                store.add(
+                                    StreakRecord(
+                                        startTime = start,
+                                        resetTime = now,
+                                        days = streakDays(start, now),
+                                        reason = reason.trim(),
+                                    )
                                 )
-                            )
-                            store.currentStart = null
-                            streakStart = null
-                            history = store.history()
-                        },
-                    )
-                    1 -> HistoryScreen(records = history)
-                    else -> LevelsScreen(streakStart = streakStart)
+                                store.currentStart = null
+                                streakStart = null
+                                history = store.history()
+                            },
+                        )
+                        1 -> HistoryScreen(records = history)
+                        else -> LevelsScreen(streakStart = streakStart)
+                    }
                 }
             }
         }
